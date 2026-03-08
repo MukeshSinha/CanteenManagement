@@ -1,11 +1,11 @@
-import TestingPage from '../Components/TestingPage'; 
+import NavbarComponent from '../Components/Navbar/NavbarComponent';
 
 function App() {
   
 
   return (
-    <>
-          <TestingPage/>
+      <>
+          <NavbarComponent/>
     </>
   )
 }

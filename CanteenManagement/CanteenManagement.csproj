@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="clientapp\Components\NavbarComponent.tsx" />
     <None Remove="clientapp\Components\TestingPage.tsx" />
   </ItemGroup>
 
@@ -15,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="clientapp\Components\Navbar\NavbarComponent.tsx" />
     <TypeScriptCompile Include="clientapp\Components\TestingPage.tsx" />
   </ItemGroup>
 
