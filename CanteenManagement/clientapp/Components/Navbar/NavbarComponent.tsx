@@ -93,7 +93,7 @@ const NavbarComponent: React.FC = () => {
                         </NavDropdown>
                     </Nav>
 
-                    {/* Right side - User icons */}
+                    {/* Right side - User iconss */}
                     <Nav className="ms-auto">
                         <NavDropdown
                             title={
