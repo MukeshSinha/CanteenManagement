@@ -1,10 +1,18 @@
-﻿var builder = WebApplication.CreateBuilder(args);
+﻿using CanteenManagement.BusinessLayer;
+using CanteenManagement.Services;
+
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
 
+builder.Services.AddScoped<SessionManager>();
 
+builder.Services.AddScoped<IHeaderService, HeaderService>();
+
+
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 
 var app = builder.Build();

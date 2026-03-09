@@ -1,162 +1,187 @@
-﻿/* Navbar with gradient + hover + spacing + user icon + caret fix */
+﻿/* ================= HEADER ================= */
 
-.navbar {
-    background: linear-gradient(90deg, #1e3c72, #2a5298) !important;
-    padding: 0.6rem 1rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-    transition: background 0.4s ease;
+.app-header {
+    background: linear-gradient(135deg,#0f172a,#1e293b,#334155);
+    color: white;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+    z-index: 1050;
+    overflow: visible;
 }
 
-    .navbar:hover {
-        background: linear-gradient(90deg, #1e3c72, #3a6bb8) !important;
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+}
+
+.header-logo {
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.3s;
+}
+
+    .header-logo:hover {
+        transform: scale(1.05);
+        background: rgba(255,255,255,0.25);
     }
 
-/* Brand */
-.navbar-brand {
-    font-size: 1.45rem !important;
+.header-title {
+    font-size: 1.6rem;
     font-weight: 700;
-    padding: 0.6rem 1.2rem !important;
+    margin: 0;
+    color: #e2f3ff;
+    letter-spacing: 0.5px;
 }
 
-/* Main menu items */
+
+/* ================= NAVBAR ================= */
+
+.main-navbar {
+    background: linear-gradient(90deg,#1e3c72,#2a5298);
+    padding: 8px 20px;
+    position: relative;
+    z-index: 1040;
+}
+
 .nav-link,
 .dropdown-toggle {
-    font-size: 1.18rem !important;
+    font-size: 1.1rem;
     font-weight: 500;
-    padding: 0.9rem 1.5rem !important;
-    margin: 0 0.4rem;
+    padding: 10px 18px !important;
+    margin: 0 4px;
     border-radius: 6px;
-    transition: all 0.25s ease;
+    transition: 0.25s;
 }
 
     .nav-link:hover,
     .dropdown-toggle:hover {
-        background-color: rgba(255, 255, 255, 0.15) !important;
+        background: rgba(255,255,255,0.15);
     }
 
-/* Dropdown menu */
+
+/* ================= DROPDOWN ================= */
+
 .dropdown-menu {
-    background-color: #1a2538 !important;
+    background: #1a2538 !important;
     border: 1px solid #3a5078;
     border-radius: 8px;
-    margin-top: 6px;
-    padding: 0.5rem 0;
-    min-width: 240px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    min-width: 200px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    padding: 6px 0;
+    z-index: 2000 !important;
 }
 
-/* Dropdown items */
 .dropdown-item {
-    font-size: 1.08rem !important;
-    padding: 0.8rem 1.7rem !important;
-    color: #e8f0fe !important;
-    transition: all 0.2s ease;
+    color: #e3ecff;
+    padding: 10px 16px;
+    font-size: 0.95rem;
 }
 
-    .dropdown-item:hover,
-    .dropdown-item:focus {
-        background-color: #2c3e50 !important;
-        color: white !important;
+    .dropdown-item:hover {
+        background: #2c3f64;
+        color: white;
     }
 
-/* Submenu */
+.dropdown-divider {
+    border-color: #3a5078;
+}
+
+
+/* ================= SUBMENU ================= */
+
 .dropdown-submenu {
     position: relative;
 }
 
     .dropdown-submenu > .dropdown-toggle::after {
         position: absolute;
-        right: 1.2rem;
+        right: 12px;
         top: 50%;
         transform: translateY(-50%);
         content: "›";
-        font-size: 1.4rem;
-        color: #a0c0ff;
+        font-size: 18px;
     }
 
     .dropdown-submenu .dropdown-menu {
-        top: -8px;
+        top: 0;
         left: 100%;
-        margin-left: 6px;
-        border-radius: 0 8px 8px 8px;
-        min-width: 235px;
+        margin-left: 4px;
     }
 
-/* User icon styling */
-.user-icon-wrapper {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.15);
+
+/* ================= USER MENU ================= */
+
+.user-dropdown-wrapper {
+    position: relative;
     display: flex;
     align-items: center;
-    justify-content: center;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    transition: all 0.25s ease;
 }
 
-.user-dropdown .dropdown-toggle {
-    padding: 0.4rem 2rem 0.4rem 0.8rem !important; /* right padding arrow ke liye */
-    border-radius: 50%;
+.user-dropdown {
     position: relative;
 }
 
-    .user-dropdown .dropdown-toggle:hover .user-icon-wrapper {
-        background-color: rgba(255, 255, 255, 0.25);
-        border-color: rgba(255, 255, 255, 0.6);
+    .user-dropdown .dropdown-toggle {
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .user-dropdown .dropdown-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: auto;
+        margin-top: 0;
+        min-width: 180px;
+        z-index: 3000 !important;
+    }
+
+
+/* ================= USER ICON ================= */
+
+.user-icon-wrapper {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    border: 2px solid rgba(255,255,255,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+    .user-icon-wrapper:hover {
+        background: rgba(255,255,255,0.3);
+        border-color: rgba(255,255,255,0.6);
         transform: scale(1.05);
     }
 
-    /* IMPORTANT: Caret (down arrow) ko right side pe fix karna */
-    .user-dropdown .dropdown-toggle::after {
-        position: absolute !important;
-        right: 0.6rem !important;
-        top: 50% !important;
-        transform: translateY(-50%) !important;
-        margin: 0 !important;
-        border-top: 0.35em solid;
-        border-right: 0.35em solid transparent;
-        border-bottom: 0;
-        border-left: 0.35em solid transparent;
-    }
+.user-dropdown .dropdown-toggle::after {
+    display: none !important;
+}
 
-/* Mobile adjustments */
-@media (max-width: 991.98px) {
-    .navbar-collapse {
-        background-color: #1e3c72;
-        padding: 1.2rem;
-        border-top: 1px solid #3a5078;
-        margin-top: 0.5rem;
+
+/* ================= MOBILE ================= */
+
+@media (max-width:991px) {
+
+    .header-title {
+        font-size: 1.3rem;
     }
 
     .nav-link,
-    .dropdown-item {
-        padding: 1rem 1.6rem !important;
-        font-size: 1.12rem !important;
+    .dropdown-toggle {
+        padding: 10px !important;
     }
-
-    .dropdown-submenu .dropdown-menu {
-        left: 2rem !important;
-        position: relative !important;
-        border-left: 4px solid #4a6fa5;
-        margin: 0.6rem 0;
-    }
-
-    .dropdown-submenu > .dropdown-toggle::after {
-        right: 1.5rem;
-        transform: rotate(90deg);
-    }
-
-    .user-icon-wrapper {
-        width: 42px;
-        height: 42px;
-    }
-
-    .user-dropdown .dropdown-toggle {
-        padding: 0.6rem 2.2rem 0.6rem 1rem !important;
-    }
-
-        .user-dropdown .dropdown-toggle::after {
-            right: 0.8rem !important;
-        }
 }
