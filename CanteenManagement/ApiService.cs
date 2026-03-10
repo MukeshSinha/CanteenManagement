@@ -3,22 +3,9 @@
     public class ApiService
     {
         private static readonly HttpClient client = new HttpClient();
-        public static string userManage = "https://www.universitymanagementsystem.in/UserManage/";
-        public static string Host = "https://www.universitymanagementsystem.in/uiapi/api/";
-        public static string InventoryHost = "https://www.universitymanagementsystem.in/inventory/api/";
-        public static string HostelHost = "https://www.universitymanagementsystem.in/hostel/api/";
-        public static string SearchStudent = "https://www.universitymanagementsystem.in/webapi/api/";
-        public static string role = "https://www.universitymanagementsystem.in/UserManage/";
-        public static string Library = "https://www.universitymanagementsystem.in/library/api/libmasters";
-        public static string Librarys = "https://www.universitymanagementsystem.in/library/api/Book/";
-        public static string bookIssue = "https://www.universitymanagementsystem.in/library/api/BookIssue/";
-        public static string masterLibrary = "https://www.universitymanagementsystem.in/library/api/";
-        public static string HRMS = "https://www.universitymanagementsystem.in/hrms/api/";
-        public static string LMS = "https://www.universitymanagementsystem.in/Lms/api/v1/";
-        public static string Student = "https://www.universitymanagementsystem.in/Student/api/";
-        public static string Accounts = "https://www.universitymanagementsystem.in/Accounts/api/";
-        public static string Academic = "https://www.universitymanagementsystem.in/AcademicReports/api/";
-
+       
+        public static string Canteen = "http://sprlhrd.shrirampistons.com:8080/canteen/api/";
+        public static string Master = "http://sprlhrd.shrirampistons.com:8080/canteen/api/Masters/";
         public async Task<string> SendRequestAsync(
             string url,
             HttpMethod method,

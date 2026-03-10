@@ -18,10 +18,9 @@
         {
             var mheader = new Dictionary<string, string>
       {
-            { "DatabaseName", _httpContextAccessor.HttpContext.Session.GetString("DbName") },
-            { "UserID", _httpContextAccessor.HttpContext.Session.GetString("loginId") },
-            { "jToken", _httpContextAccessor.HttpContext.Session.GetString("jToken") },
-            { "IpAddress", _httpContextAccessor.HttpContext.Session.GetString("IpAddress") },
+            { "DatabaseName", "MaxCanteen" },
+            { "UserID", "abc"},
+            { "IpAddress", "123.456.789" },
 
       };
 

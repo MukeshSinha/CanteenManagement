@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="clientapp\Components\CanteenDashboard.tsx" />
     <None Remove="clientapp\Components\DailyCantinee.tsx" />
+    <None Remove="clientapp\Components\DateWiseReport.tsx" />
     <None Remove="clientapp\Components\NavbarComponent.tsx" />
     <None Remove="clientapp\Components\TestingPage.tsx" />
   </ItemGroup>
@@ -17,8 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="clientapp\Components\CanteenDashboard.tsx" />
     <TypeScriptCompile Include="clientapp\Components\DailyCantinee.tsx" />
+    <TypeScriptCompile Include="clientapp\Components\DateWiseReport.tsx" />
     <TypeScriptCompile Include="clientapp\Components\Navbar\NavbarComponent.tsx" />
+    <TypeScriptCompile Include="clientapp\Components\ShiftWiseReport.tsx" />
     <TypeScriptCompile Include="clientapp\Components\TestingPage.tsx" />
   </ItemGroup>
 
