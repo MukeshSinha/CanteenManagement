@@ -25,6 +25,7 @@ import {
     Download as DownloadIcon,
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
+import { apiCall } from '../src/Services/api'; 
 
 // only this part is hardcoded
 const categories = ['Staff', 'Officer', 'DTL', 'Sub', 'Cont', 'NAPS', 'TOA', 'APP'];
@@ -48,10 +49,7 @@ function ShiftWiseReport() {
 
     const fetchContractors = async (): Promise<string[]> => {
         try {
-            const res = await fetch('/api/ShitWise/Contractor-Report', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-            });
+            const res = await apiCall("api/ShitWise/Contractor-Report");
 
             if (!res.ok) throw new Error('Failed to load contractors');
 
