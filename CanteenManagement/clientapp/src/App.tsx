@@ -1,11 +1,12 @@
 import NavbarComponent from '../Components/Navbar/NavbarComponent';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route} from 'react-router-dom';
 //import DailyCantinee from '../Components/DailyCantinee';
 import CanteenDashboard from '../Components/CanteenDashboard';
 import ShiftWiseReport from '../Components/ShiftWiseReport';
 import DateWiseReport from '../Components/DateWiseReport';
 import ContractorCategory from '../Components/ContractorCategory';
 function App() {
+    
   return (
       <>
           <NavbarComponent />

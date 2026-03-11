@@ -23,6 +23,7 @@ app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+
 // 2️⃣ Routing start
 app.UseRouting();
 
