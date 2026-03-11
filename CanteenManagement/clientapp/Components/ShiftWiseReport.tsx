@@ -50,10 +50,10 @@ function ShiftWiseReport() {
     const fetchContractors = async (): Promise<string[]> => {
         try {
             const res = await apiCall("api/ShitWise/Contractor-Report");
+            console.log('Raw contractors API response:', res);
 
-            if (!res.ok) throw new Error('Failed to load contractors');
-
-            const result = await res.json();
+            const result = await res;
+            console.log('Fetched contractors result:', result);
 
             // safety in case API returns stringified JSON (uncommon but happens sometimes)
             const data = typeof result === 'string' ? JSON.parse(result) : result;
@@ -85,17 +85,13 @@ function ShiftWiseReport() {
             }).toString();
             console.log("query strring is:", queryString);
 
-            const url = `/api/ShitWise/ShitWise-Data?${queryString}`;
+            const url = `api/ShitWise/ShitWise-Data?${queryString}`;
 
-            const res = await fetch(url, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-                
-            });
+            const response = await apiCall(url);
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
 
-            let data = await res.json();
+            let data = await response;
             if (typeof data === 'string') data = JSON.parse(data);
 
             const table = data?.dataFetch?.table || [];
