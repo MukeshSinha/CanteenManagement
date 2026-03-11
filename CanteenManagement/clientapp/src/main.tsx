@@ -5,11 +5,15 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import App from './App.tsx'
 import { BrowserRouter } from 'react-router-dom'
-const baseName = '/' + window.location.pathname.split('/')[1];
+// baseName = '/' + window.location.pathname.split('/')[1];
+
+//<BrowserRouter basename={baseName === '/' ? '/' : baseName}>
+//    <App />
+//</BrowserRouter>
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-        <BrowserRouter basename={baseName === '/' ? '/' : baseName}>
+        <BrowserRouter basename={window.location.pathname.split('/')[1] ? '/' + window.location.pathname.split('/')[1] : '/'}>
             <App />
         </BrowserRouter>
   </StrictMode>,

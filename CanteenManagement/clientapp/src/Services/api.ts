@@ -1,12 +1,18 @@
 ﻿export const apiCall = async (url: string, options?: RequestInit) => {
-    const base = import.meta.env.BASE_URL;
-    console.log(`Making API call to: ${base}${url}`);
+    
+    const base = document.querySelector("base")?.getAttribute("href") || "/";
 
-    const res = await fetch(`${base}${url}`, {
+    // Final URL
+    const fullUrl = `${base}${url}`.replace(/\/\//g, '/'); 
+
+    console.log(`Making API call to: ${fullUrl}`);
+
+    const res = await fetch(fullUrl, {
         headers: { 'Content-Type': 'application/json' },
         ...options,
     });
-    console.log(`Received response:${res}`);
+
+    console.log(`Received response:`, res);
 
     if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
