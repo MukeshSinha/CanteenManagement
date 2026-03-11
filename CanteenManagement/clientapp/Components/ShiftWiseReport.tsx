@@ -49,7 +49,7 @@ function ShiftWiseReport() {
 
     const fetchContractors = async (): Promise<string[]> => {
         try {
-            const res = await apiCall("api/ShitWise/Contractor-Report");
+            const res = await apiCall("/api/ShitWise/Contractor-Report");
             console.log('Raw contractors API response:', res);
 
             const result = await res;
@@ -85,7 +85,7 @@ function ShiftWiseReport() {
             }).toString();
             console.log("query strring is:", queryString);
 
-            const url = `api/ShitWise/ShitWise-Data?${queryString}`;
+            const url = `/api/ShitWise/ShitWise-Data?${queryString}`;
 
             const response = await apiCall(url);
 

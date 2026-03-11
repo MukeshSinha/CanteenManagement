@@ -1,22 +1,28 @@
 ﻿export const apiCall = async (url: string, options?: RequestInit) => {
-    
-    const base = document.querySelector("base")?.getAttribute("href") || "/";
 
-    // Final URL
-    const fullUrl = `${base}${url}`.replace(/\/\//g, '/'); 
+    const baseUrl = window.location.origin;
+    // https://localhost:7263
 
-    console.log(`Making API call to: ${fullUrl}`);
+    const fullUrl = `${baseUrl}${url}`;
 
-    const res = await fetch(fullUrl, {
-        headers: { 'Content-Type': 'application/json' },
-        ...options,
-    });
+    console.log("API URL:", fullUrl);
 
-    console.log(`Received response:`, res);
+    try {
+        const res = await fetch(fullUrl, {
+            headers: {
+                "Content-Type": "application/json"
+            },
+            ...options
+        });
 
-    if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+
+        return await res.json();
+
+    } catch (err) {
+        console.error("API Error:", err);
+        throw err;
     }
-
-    return res.json();
 };
