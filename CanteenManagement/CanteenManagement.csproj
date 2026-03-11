@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <None Remove="clientapp\Components\CanteenDashboard.tsx" />
+    <None Remove="clientapp\Components\ContractorCategory.tsx" />
     <None Remove="clientapp\Components\DailyCantinee.tsx" />
     <None Remove="clientapp\Components\DateWiseReport.tsx" />
     <None Remove="clientapp\Components\NavbarComponent.tsx" />
@@ -20,6 +21,7 @@
 
   <ItemGroup>
     <TypeScriptCompile Include="clientapp\Components\CanteenDashboard.tsx" />
+    <TypeScriptCompile Include="clientapp\Components\ContractorCategory.tsx" />
     <TypeScriptCompile Include="clientapp\Components\DailyCantinee.tsx" />
     <TypeScriptCompile Include="clientapp\Components\DateWiseReport.tsx" />
     <TypeScriptCompile Include="clientapp\Components\Navbar\NavbarComponent.tsx" />

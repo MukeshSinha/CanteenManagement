@@ -4,6 +4,7 @@ import { Routes, Route } from 'react-router-dom';
 import CanteenDashboard from '../Components/CanteenDashboard';
 import ShiftWiseReport from '../Components/ShiftWiseReport';
 import DateWiseReport from '../Components/DateWiseReport';
+import ContractorCategory from '../Components/ContractorCategory';
 function App() {
   return (
       <>
@@ -14,6 +15,7 @@ function App() {
                   <Route path="daily-meal">
                       <Route path="shift-wise" element={<ShiftWiseReport />} />
                       <Route path="date-wise" element={<DateWiseReport />} />
+                      <Route path="contractor-category" element={<ContractorCategory />} />
                   </Route>
               </Route>
           </Routes>

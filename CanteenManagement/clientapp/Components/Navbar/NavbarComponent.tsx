@@ -119,13 +119,11 @@ const NavbarComponent: React.FC = () => {
                                     <NavDropdown.Item as={Link} to="/reports/daily-meal/shift-wise">
                                         Shift Wise
                                     </NavDropdown.Item>
-
-                                    <NavDropdown.Item as={Link} to="/reports/daily-meal/contractor-wise">
-                                        Contractor Wise
-                                    </NavDropdown.Item>
-
                                     <NavDropdown.Item as={Link} to="/reports/daily-meal/date-wise">
                                         Date Wise
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/reports/daily-meal/contractor-category">
+                                        Contractor Category
                                     </NavDropdown.Item>
                                 </NavDropdown>
 

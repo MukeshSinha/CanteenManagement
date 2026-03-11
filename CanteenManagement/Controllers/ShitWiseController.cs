@@ -41,6 +41,15 @@ namespace CanteenManagement.Controllers
             var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
             return Content(response, "application/json");
         }
+
+        [HttpGet("Contractor-Category")]
+        public async Task<IActionResult> ContractorCategory(string? fromdate = null, string? uptodate = null)
+        {
+            string url = ApiService.Canteen + $"CanteenPunch/ContractorCategory?fromdate={fromdate}&uptodate={uptodate}";
+            var mHeader = _headers.GetHeaders();
+            var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+            return Content(response, "application/json");
+        }
     }
 
     
