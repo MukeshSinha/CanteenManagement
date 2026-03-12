@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import { apiFetch } from '../src/utils/api'
-import { apiCallingData } from '../src/Services/apiCalling';    
+//import { apiCallingData } from '../src/Services/apiCalling';    
 
 // only this part is hardcoded
 const categories = ['Staff', 'Officer', 'DTL', 'Sub', 'Cont', 'NAPS', 'TOA', 'APP'];
@@ -44,34 +44,37 @@ function ShiftWiseReport() {
     const [loading, setLoading] = useState<boolean>(false);
     const [showReport, setShowReport] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [contractorLoading, setContractorLoading] = useState<boolean>(false);
 
     // ────────────────────────────────────────────────
     // API calls defined INSIDE the component
 
-    const fetchContractors = async (): Promise<string[]> => {
+    const fetchContractors = async () => {
         try {
-            //const basePath = document.querySelector('base')?.getAttribute('href') ?? '/';
-            //console.log("Base Path:", basePath);
-            const result = await apiCallingData('/api/ShitWise/Contractor-Report');
+            setContractorLoading(true);
+            let result = await apiFetch('ShitWise/Contractor-Report');
             console.log('Raw contractors API response:', result);
 
-            let data = await result.data;
-                
-            console.log('Fetched contractors result data:', data);
+            if (typeof result === 'string') result = JSON.parse(result);
 
-            // safety in case API returns stringified JSON (uncommon but happens sometimes)
-            data = typeof data === 'string' ? JSON.parse(data) : data;
+            console.log('Fetched contractors result data:', result);
 
-            console.log('Contractors API response:', data);
+            
 
-            const list = data?.dataFetch?.table
+            const list = result?.dataFetch?.table
                 ?.map((item: any) => String(item.compName ?? '').trim())
                 ?.filter((name: string) => name) ?? [];
+            setContractors(list);
 
-            return list;
-        } catch (err: unknown) {
+            
+            
+        }
+        catch (err: unknown) {
             console.error('fetchContractors error:', err);
             return [];
+        }
+        finally {
+            setContractorLoading(false);
         }
     };
 
@@ -113,20 +116,7 @@ function ShiftWiseReport() {
     // ────────────────────────────────────────────────
 
     useEffect(() => {
-        let mounted = true;
-
-        const loadContractors = async () => {
-            const list = await fetchContractors();
-            if (mounted) {
-                setContractors(list);
-            }
-        };
-
-        loadContractors();
-
-        return () => {
-            mounted = false;
-        };
+        fetchContractors()
     }, []);
 
     const handleShow = async () => {
@@ -278,8 +268,25 @@ function ShiftWiseReport() {
                             fullWidth
                             options={contractors}
                             value={contractor}
+                            loading={contractorLoading}
                             onChange={(_, newValue) => setContractor(newValue)}
-                            renderInput={(params) => <TextField {...params} label="Contractor (optional)" />}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Contractor (optional)"
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <>
+                                                {contractorLoading ? (
+                                                    <CircularProgress size={20} />
+                                                ) : null}
+                                                {params.InputProps.endAdornment}
+                                            </>
+                                        ),
+                                    }}
+                                />
+                            )}
                         />
                     </Stack>
 
