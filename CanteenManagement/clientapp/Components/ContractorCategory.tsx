@@ -11,10 +11,11 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 
-import axios from "axios";
+
 
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
+import { apiFetch } from '../src/utils/api'
 
 interface ContractorCategoryRow {
     id: number;
@@ -59,13 +60,8 @@ const ContractorCategory = () => {
         setSearched(true)
         setLoading(true)
         try {
-            const response = await axios.get("/api/ShitWise/Contractor-Category", {
-                params: {
-                    fromdate: fromDate,
-                    uptodate: toDate
-                }
-            })
-            let result = await response.data;
+            let result = await apiFetch(`ShitWise/Contractor-Category?fromdate=${fromDate}&uptodate=${toDate}`);
+            
             result = typeof result === 'string' ? JSON.parse(result) : result;
             const data = result.dataFetch.table
 

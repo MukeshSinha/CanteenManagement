@@ -2,11 +2,14 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: "./",
-  plugins: [react()],
-    build: {
-      outDir: "../wwwroot",
-      emptyOutDir:true
-  }
+export default defineConfig(({ mode }) => {
+    return {
+        base: mode === 'production' ? './' : '/',  
+        plugins: [react()],
+        build: {
+            outDir: "../wwwroot",
+            emptyOutDir: true,
+        },
+        
+    }
 })

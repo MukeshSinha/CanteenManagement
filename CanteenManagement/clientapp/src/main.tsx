@@ -11,9 +11,18 @@ import { BrowserRouter } from 'react-router-dom'
 //    <App />
 //</BrowserRouter>
 
+const base =
+    window.location.pathname.split('/')[1]
+        ? '/' + window.location.pathname.split('/')[1]
+        : '/'
+
+console.log("Base is:", base);
+
+
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-        <BrowserRouter basename={window.location.pathname.split('/')[1] ? '/' + window.location.pathname.split('/')[1] : '/'}>
+        <BrowserRouter basename={base}>
             <App />
         </BrowserRouter>
   </StrictMode>,

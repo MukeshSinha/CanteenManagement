@@ -15,6 +15,7 @@
     <None Remove="clientapp\Components\NavbarComponent.tsx" />
     <None Remove="clientapp\Components\TestingPage.tsx" />
     <None Remove="clientapp\src\Services\api.ts" />
+    <None Remove="clientapp\src\utils\api.ts" />
   </ItemGroup>
 
   <ItemGroup>
@@ -31,6 +32,7 @@
     <TypeScriptCompile Include="clientapp\Components\ShiftWiseReport.tsx" />
     <TypeScriptCompile Include="clientapp\Components\TestingPage.tsx" />
     <TypeScriptCompile Include="clientapp\src\Services\api.ts" />
+    <TypeScriptCompile Include="clientapp\src\utils\api.ts" />
   </ItemGroup>
 
   <ItemGroup>

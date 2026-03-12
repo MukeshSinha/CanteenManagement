@@ -26,6 +26,7 @@ import {
     Download as DownloadIcon,
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
+import { apiFetch } from '../src/utils/api'
 
 
 
@@ -54,20 +55,12 @@ function DateWiseReport() {
             }).toString();
             console.log("query strring is:", queryString);
 
-            const url = `/api/ShitWise/DateWise-Report?${queryString}`;
+            const url = `ShitWise/DateWise-Report?${queryString}`;
 
-            const res = await fetch(url, {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
+            let result = await apiFetch(url);
+            if (typeof result === 'string') result = JSON.parse(result);
 
-            });
-
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-            let data = await res.json();
-            if (typeof data === 'string') data = JSON.parse(data);
-
-            const table = data?.dataFetch?.table || [];
+            const table = result?.dataFetch?.table || [];
             const columns = table.length > 0 ? Object.keys(table[0]) : [];
 
             return { rows: table, columns };

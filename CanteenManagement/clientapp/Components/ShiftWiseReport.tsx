@@ -25,7 +25,7 @@ import {
     Download as DownloadIcon,
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
-import { apiCall } from '../src/Services/api'; 
+import { apiFetch } from '../src/utils/api'
 
 // only this part is hardcoded
 const categories = ['Staff', 'Officer', 'DTL', 'Sub', 'Cont', 'NAPS', 'TOA', 'APP'];
@@ -49,13 +49,13 @@ function ShiftWiseReport() {
 
     const fetchContractors = async (): Promise<string[]> => {
         try {
-            const basePath = document.querySelector('base')?.getAttribute('href') ?? '/';
-            console.log("Base Path:", basePath);
-            const res = await fetch(`${basePath}api/ShitWise/Contractor-Report`);
-            console.log('Raw contractors API response:', res);
+            //const basePath = document.querySelector('base')?.getAttribute('href') ?? '/';
+            //console.log("Base Path:", basePath);
+            const result = await apiFetch('ShitWise/Contractor-Report');
+            console.log('Raw contractors API response:', result);
 
-            const result = await res.json();
-            console.log('Fetched contractors result:', result);
+            //const result = await res.json();
+            //console.log('Fetched contractors result:', result);
 
             // safety in case API returns stringified JSON (uncommon but happens sometimes)
             const data = typeof result === 'string' ? JSON.parse(result) : result;
@@ -87,16 +87,16 @@ function ShiftWiseReport() {
             }).toString();
             console.log("query strring is:", queryString);
 
-            const url = `/api/ShitWise/ShitWise-Data?${queryString}`;
+            const url = `ShitWise/ShitWise-Data?${queryString}`;
 
-            const response = await apiCall(url);
+            let result = await apiFetch(url);
 
             
 
-            let data = await response;
-            if (typeof data === 'string') data = JSON.parse(data);
+            //let data = await response;
+            if (typeof result === 'string') result = JSON.parse(result);
 
-            const table = data?.dataFetch?.table || [];
+            const table = result?.dataFetch?.table || [];
             const columns = table.length > 0 ? Object.keys(table[0]) : [];
 
             return { rows: table, columns };
