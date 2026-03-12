@@ -49,10 +49,12 @@ function ShiftWiseReport() {
 
     const fetchContractors = async (): Promise<string[]> => {
         try {
-            const res = await apiCall("/api/ShitWise/Contractor-Report");
+            const basePath = document.querySelector('base')?.getAttribute('href') ?? '/';
+            console.log("Base Path:", basePath);
+            const res = await fetch(`${basePath}api/ShitWise/Contractor-Report`);
             console.log('Raw contractors API response:', res);
 
-            const result = await res;
+            const result = await res.json();
             console.log('Fetched contractors result:', result);
 
             // safety in case API returns stringified JSON (uncommon but happens sometimes)
