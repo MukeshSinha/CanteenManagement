@@ -11,18 +11,20 @@ import { BrowserRouter } from 'react-router-dom'
 //    <App />
 //</BrowserRouter>
 
-const base =
-    window.location.pathname.split('/')[1]
-        ? '/' + window.location.pathname.split('/')[1]
-        : '/'
+const getBaseUrl = () => {
+    if ((window as any).__BASE_HREF__) return (window as any).__BASE_HREF__;
+    const path = window.location.pathname;
+    const firstSegment = path.split('/').filter(Boolean)[0];
+    return firstSegment ? `/${firstSegment}/` : '/';
+};
 
-console.log("Base is:", base);
+const baseName = getBaseUrl();
 
 
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-        <BrowserRouter basename={base}>
+        <BrowserRouter basename={baseName}>
             <App />
         </BrowserRouter>
   </StrictMode>,

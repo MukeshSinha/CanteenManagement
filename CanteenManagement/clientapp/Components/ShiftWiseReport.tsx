@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import { apiFetch } from '../src/utils/api'
+import { apiCallingData } from '../src/Services/apiCalling';    
 
 // only this part is hardcoded
 const categories = ['Staff', 'Officer', 'DTL', 'Sub', 'Cont', 'NAPS', 'TOA', 'APP'];
@@ -51,14 +52,15 @@ function ShiftWiseReport() {
         try {
             //const basePath = document.querySelector('base')?.getAttribute('href') ?? '/';
             //console.log("Base Path:", basePath);
-            const result = await apiFetch('ShitWise/Contractor-Report');
+            const result = await apiCallingData('/api/ShitWise/Contractor-Report');
             console.log('Raw contractors API response:', result);
 
-            //const result = await res.json();
-            //console.log('Fetched contractors result:', result);
+            let data = await result.data;
+                
+            console.log('Fetched contractors result data:', data);
 
             // safety in case API returns stringified JSON (uncommon but happens sometimes)
-            const data = typeof result === 'string' ? JSON.parse(result) : result;
+            data = typeof data === 'string' ? JSON.parse(data) : data;
 
             console.log('Contractors API response:', data);
 
