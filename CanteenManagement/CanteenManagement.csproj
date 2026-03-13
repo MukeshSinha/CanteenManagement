@@ -14,6 +14,7 @@
     <None Remove="clientapp\Components\DateWiseReport.tsx" />
     <None Remove="clientapp\Components\NavbarComponent.tsx" />
     <None Remove="clientapp\Components\TestingPage.tsx" />
+    <None Remove="clientapp\Components\UploadMeal.tsx" />
     <None Remove="clientapp\src\Services\apiCalling.ts" />
     <None Remove="clientapp\src\Services\config.ts" />
     <None Remove="clientapp\src\utils\api.ts" />
@@ -32,6 +33,7 @@
     <TypeScriptCompile Include="clientapp\Components\Navbar\NavbarComponent.tsx" />
     <TypeScriptCompile Include="clientapp\Components\ShiftWiseReport.tsx" />
     <TypeScriptCompile Include="clientapp\Components\TestingPage.tsx" />
+    <TypeScriptCompile Include="clientapp\Components\UploadMeal.tsx" />
     <TypeScriptCompile Include="clientapp\src\Services\apiCalling.ts" />
     <TypeScriptCompile Include="clientapp\src\Services\config.ts" />
     <TypeScriptCompile Include="clientapp\src\utils\api.ts" />
