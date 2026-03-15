@@ -12,6 +12,7 @@
     <None Remove="clientapp\Components\ContractorCategory.tsx" />
     <None Remove="clientapp\Components\DailyCantinee.tsx" />
     <None Remove="clientapp\Components\DateWiseReport.tsx" />
+    <None Remove="clientapp\Components\ItemMaster.tsx" />
     <None Remove="clientapp\Components\NavbarComponent.tsx" />
     <None Remove="clientapp\Components\TestingPage.tsx" />
     <None Remove="clientapp\Components\UploadMeal.tsx" />
@@ -21,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
@@ -30,6 +32,7 @@
     <TypeScriptCompile Include="clientapp\Components\ContractorCategory.tsx" />
     <TypeScriptCompile Include="clientapp\Components\DailyCantinee.tsx" />
     <TypeScriptCompile Include="clientapp\Components\DateWiseReport.tsx" />
+    <TypeScriptCompile Include="clientapp\Components\ItemMaster.tsx" />
     <TypeScriptCompile Include="clientapp\Components\Navbar\NavbarComponent.tsx" />
     <TypeScriptCompile Include="clientapp\Components\ShiftWiseReport.tsx" />
     <TypeScriptCompile Include="clientapp\Components\TestingPage.tsx" />
