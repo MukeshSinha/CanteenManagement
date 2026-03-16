@@ -17,6 +17,7 @@ import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 import { apiFetch } from '../src/utils/api'
 
+
 interface ContractorCategoryRow {
     id: number;
     ezone: string;
@@ -75,7 +76,7 @@ const ContractorCategory = () => {
             setRows(formatted)
         }
         catch (Ex) {
-
+            console.error("Error fetching contractor category data:", Ex)
         }
         finally {
             setLoading(false)

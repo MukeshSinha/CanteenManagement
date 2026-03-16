@@ -29,13 +29,14 @@ console.log('Detected first part (subdir):', window.location.pathname.split('/')
 console.log('Chosen API_BASE:', API_BASE);
 
 // Fetch helper function
-export async function apiFetch(endpoint: string) {
+export async function apiFetch(endpoint: string, options?: RequestInit) {
     const cleanEndpoint = endpoint.replace(/^\//, '');
     const fullUrl = `${API_BASE}/${cleanEndpoint}`;
 
     console.log('Fetching:', fullUrl);
 
-    const response = await fetch(fullUrl);
+    const response = await fetch(fullUrl, options);
+
     if (!response.ok) {
         console.error('API call failed:', response.status, fullUrl);
         throw new Error(`API error: ${response.status} - ${endpoint}`);
