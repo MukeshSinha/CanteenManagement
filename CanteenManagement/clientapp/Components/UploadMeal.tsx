@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import { useState } from 'react';
 import {
     Box,
     Card,
@@ -9,15 +9,18 @@ import {
     Typography,
     CircularProgress,
     Divider,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper,
+    TablePagination,
 } from '@mui/material';
-import { DataGrid} from '@mui/x-data-grid';
 import Swal from 'sweetalert2';
-import * as XLSX from 'xlsx';  
-import { apiFetch } from '../src/utils/api';
-import type { GridColDef } from '@mui/x-data-grid';
-
-
-
+import * as XLSX from 'xlsx';
+import { apiFetch } from '../src/utils/api'; // adjust path if needed
 
 const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -50,6 +53,14 @@ const UploadMeal = () => {
     const [mainTableData, setMainTableData] = useState<EmployeeRow[]>([]);
     const [summaryTableData, setSummaryTableData] = useState<SummaryRow[]>([]);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
+    const [searchText, setSearchText] = useState('');
+    const [page, setPage] = useState(0);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+
+    const [searchTextSummary, setSearchTextSummary] = useState('');
+    const [summaryPage, setSummaryPage] = useState(0);
+    const [summaryRowsPerPage, setSummaryRowsPerPage] = useState(10);
+    const [hasDataLoaded, setHasDataLoaded] = useState(false);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -72,6 +83,43 @@ const UploadMeal = () => {
         }
 
         setSelectedFile(file);
+    };
+
+    const filteredData = mainTableData.filter((row) =>
+        Object.values(row)
+            .join(' ')
+            .toLowerCase()
+            .includes(searchText.toLowerCase())
+    );
+
+    const handleChangePage = (_: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
+    const handleNosChange = (id: number, value: number) => {
+        setMainTableData((prev) =>
+            prev.map((row) => (row.id === id ? { ...row, nos: value } : row))
+        );
+    };
+
+    // Filtered summary
+    const filteredSummaryData = summaryTableData.filter((row) =>
+        row.ezone.toLowerCase().includes(searchTextSummary.toLowerCase())
+    );
+
+    // Handlers
+    const handleChangeSummaryPage = (_: unknown, newPage: number) => {
+        setSummaryPage(newPage);
+    };
+
+    const handleChangeSummaryRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setSummaryRowsPerPage(parseInt(event.target.value, 10));
+        setSummaryPage(0);
     };
 
     const parseExcelFile = (file: File, sheetIndex: number): Promise<any[]> => {
@@ -101,11 +149,10 @@ const UploadMeal = () => {
         }
 
         setLoading(true);
-
+        setHasDataLoaded(false);
         try {
             const sheetIndex = Number(sheetNo) - 1;
             const rawData = await parseExcelFile(selectedFile, sheetIndex);
-
             const headers = (rawData[0] || []) as string[];
             const dataRows = rawData.slice(1);
 
@@ -116,6 +163,7 @@ const UploadMeal = () => {
                         const idx = headers.findIndex((h) => h && keys.some((k) => h.toLowerCase().includes(k.toLowerCase())));
                         return idx >= 0 ? String(row[idx] ?? '').trim() : '';
                     };
+
                     return {
                         id: index + 1,
                         empcode: getValue(['empcode', 'emp code']),
@@ -131,15 +179,14 @@ const UploadMeal = () => {
                 yy: Number(year),
                 listofEmployee: employees.map((e) => ({ empcode: e.empcode, nos: e.nos })),
             };
-            console.log('Payload for API:', payload);
 
             let result = await apiFetch('UploadMeal/UploadMealData', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
             });
+
             if (typeof result === 'string') result = JSON.parse(result);
-            console.log('API Response:', result);
 
             const table = result?.dataFetch?.table || [];
             const table1 = result?.dataFetch?.table1 || [];
@@ -153,7 +200,7 @@ const UploadMeal = () => {
                     etype: item.etype || '',
                     ezone: item.ezone || '',
                     nos: Number(item.nos) || 0,
-                    column1: item.column1 || 0,
+                    column1: Number(item.column1) || 0,
                 }))
             );
 
@@ -166,61 +213,42 @@ const UploadMeal = () => {
             );
 
             setIsPreviewMode(true);
+            setHasDataLoaded(true);
             Swal.fire({ icon: 'success', title: 'Preview Loaded' });
         } catch (err) {
             console.error(err);
             Swal.fire({ icon: 'error', title: 'Error occurred' });
+            setHasDataLoaded(false);
         } finally {
             setLoading(false);
         }
     };
 
-
-    // Excel export
-    const exportToExcel = (data: any[], columns: GridColDef[], filename: string) => {
-        const header = columns.map(col => col.headerName || col.field);
-        const rows = data.map(row =>
-            columns.map(col => row[col.field as keyof typeof row] ?? '')
-        );
-
-        const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+    const exportToExcel = (data: any[], filename: string) => {
+        const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
         XLSX.writeFile(wb, `${filename}.xlsx`);
     };
 
-    // CSV export
-    const exportToCSV = (data: any[], columns: GridColDef[], filename: string) => {
-        const header = columns.map(col => `"${col.headerName || col.field}"`).join(',');
-        const csvRows = data.map(row =>
-            columns.map(col => `"${(row[col.field as keyof typeof row] ?? '').toString().replace(/"/g, '""')}"`).join(',')
+    const exportToCSV = (data: any[], filename: string) => {
+        if (data.length === 0) return;
+        const header = Object.keys(data[0]);
+        const rows = data.map((row) =>
+            header.map((field) => `"${String(row[field] ?? '')}"`).join(',')
         );
-
-        const csvContent = [header, ...csvRows].join('\n');
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
+        const csv = [header.join(','), ...rows].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = `${filename}.csv`;
         link.click();
-        URL.revokeObjectURL(url);
-    };
-
-
-
-    const handleProcessRowUpdate = (newRow: EmployeeRow) => {
-        // nos update state में apply करो
-        setMainTableData((prev) =>
-            prev.map((row) => (row.id === newRow.id ? { ...row, nos: newRow.nos } : row))
-        );
-
-        // updated row return करना जरूरी है
-        return newRow;
+        window.URL.revokeObjectURL(url);
     };
 
     const handleFinalSubmit = async () => {
         if (mainTableData.length === 0) return;
-
         setLoading(true);
 
         try {
@@ -243,14 +271,17 @@ const UploadMeal = () => {
 
             Swal.fire({ icon: 'success', title: 'Submitted Successfully' });
 
-            // reset form
+            // Reset
             setIsPreviewMode(false);
+            setHasDataLoaded(false);
             setMainTableData([]);
             setSummaryTableData([]);
             setSelectedFile(null);
             setSheetNo('');
             setYear('');
             setSelectedMonth(null);
+            setSearchText('');
+            setSearchTextSummary('');
         } catch (err) {
             Swal.fire({ icon: 'error', title: 'Submission Failed' });
         } finally {
@@ -258,179 +289,310 @@ const UploadMeal = () => {
         }
     };
 
-    const mainColumns: GridColDef[] = [
-        { field: 'empcode', headerName: 'Emp Code', width: 130, editable: false },
-        { field: 'empName', headerName: 'Name', width: 180, editable: false },
-        { field: 'department', headerName: 'Department', width: 160, editable: false },
-        {
-            field: 'nos',
-            headerName: 'Nos (Meals)',
-            width: 120,
-            type: 'number',
-            editable: true,
-            renderCell: (params) => (
-                <div style={{ cursor: 'pointer', width: '100%', height: '100%', display: 'flex', alignItems: 'center' }}>
-                    {params.value}
-                </div>
-            ),
-        },
-        { field: 'ezone', headerName: 'Zone', width: 160, editable: false },
-        { field: 'column1', headerName: 'Column1', width: 110, editable: false },
-    ];
-
-    const summaryColumns: GridColDef[] = [
-        { field: 'ezone', headerName: 'Zone', width: 250 },
-        { field: 'column1', headerName: 'Total', width: 150, type: 'number' },
-    ];
-
     return (
-        <Card sx={{ maxWidth: 1200, mx: 'auto', mt: 5, boxShadow: 4, borderRadius: 3 }}>
+        <Card sx={{ maxWidth: 1400, mx: 'auto', mt: 5, boxShadow: 4, borderRadius: 3 }}>
             <CardContent sx={{ p: 4 }}>
-                <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: 600, color: 'primary.main' }}>
+                <Typography
+                    variant="h4"
+                    align="center"
+                    gutterBottom
+                    sx={{ fontWeight: 600, color: 'primary.main' }}
+                >
                     Upload Meal Data
                 </Typography>
 
-                {!isPreviewMode ? (
-                    <>
-                        <Box sx={{ display: 'flex', gap: 3, mb: 4 }}>
-                            <Autocomplete
-                                options={months}
-                                value={selectedMonth}
-                                onChange={(_, val) => setSelectedMonth(val)}
-                                fullWidth
-                                renderInput={(params) => <TextField {...params} label="Month" />}
-                            />
-                            <TextField label="Year" type="number" value={year} onChange={(e) => setYear(e.target.value)} fullWidth />
-                        </Box>
+                {/* Form - hamesha dikhega (upload screen aur preview dono mein) */}
+                <Box sx={{ mb: 5 }}>
+                    <Box sx={{ display: 'flex', gap: 3, mb: 4 }}>
+                        <Autocomplete
+                            options={months}
+                            value={selectedMonth}
+                            onChange={(_, val) => setSelectedMonth(val)}
+                            fullWidth
+                            renderInput={(params) => <TextField {...params} label="Month" />}
+                        />
+                        <TextField
+                            label="Year"
+                            type="number"
+                            value={year}
+                            onChange={(e) => setYear(e.target.value)}
+                            fullWidth
+                        />
+                    </Box>
 
-                        <Box sx={{ display: 'flex', gap: 3, mb: 5, alignItems: 'flex-start' }}>
-                            {/* Excel File Upload */}
-                            <Box sx={{ flex: 1 }}>
-                                <Button
-                                    variant="outlined"
-                                    component="label"
-                                    fullWidth
-                                    sx={{
-                                        height: '56px',
-                                        justifyContent: 'flex-start',
-                                        textAlign: 'left',
-                                        borderStyle: 'dashed',
-                                        borderWidth: 2,
-                                    }}
-                                >
-                                    📤 Upload Excel File (only .xlsx / .xls)
-                                    <input
-                                        type="file"
-                                        hidden
-                                        accept=".xlsx,.xls"
-                                        onChange={handleFileChange}
-                                    />
-                                </Button>
-                                {selectedFile && (
-                                    <Typography
-                                        variant="body2"
-                                        sx={{ mt: 1.5, color: 'success.main', fontWeight: 500 }}
-                                    >
-                                        ✅ Selected: {selectedFile.name}
-                                    </Typography>
-                                )}
-                            </Box>
-                            {/* Sheet Number */}
-                            <TextField
-                                label="Sheet No"
-                                type="number"
-                                value={sheetNo}
-                                onChange={(e) => setSheetNo(e.target.value)}
-                                fullWidth
+                    <Box sx={{ display: 'flex', gap: 3, mb: 5, alignItems: 'flex-start' }}>
+                        {/* Excel File Upload */}
+                        <Box sx={{ flex: 1 }}>
+                            <Button
                                 variant="outlined"
-                                sx={{ flex: 1 }}
-                                placeholder="e.g. 1"
-                            />
+                                component="label"
+                                fullWidth
+                                sx={{
+                                    height: '56px',
+                                    justifyContent: 'flex-start',
+                                    textAlign: 'left',
+                                    borderStyle: 'dashed',
+                                    borderWidth: 2,
+                                }}
+                            >
+                                📤 Upload Excel File (only .xlsx / .xls)
+                                <input
+                                    type="file"
+                                    hidden
+                                    accept=".xlsx,.xls"
+                                    onChange={handleFileChange}
+                                />
+                            </Button>
+                            {selectedFile && (
+                                <Typography
+                                    variant="body2"
+                                    sx={{ mt: 1.5, color: 'success.main', fontWeight: 500 }}
+                                >
+                                    ✅ Selected: {selectedFile.name}
+                                </Typography>
+                            )}
                         </Box>
+                        {/* Sheet Number */}
+                        <TextField
+                            label="Sheet No"
+                            type="number"
+                            value={sheetNo}
+                            onChange={(e) => setSheetNo(e.target.value)}
+                            fullWidth
+                            variant="outlined"
+                            sx={{ flex: 1 }}
+                            placeholder="e.g. 1"
+                        />
+                    </Box>
 
-                        <Button variant="contained" fullWidth size="large" disabled={loading} onClick={handlePreviewUpload}>
-                            {loading ? <CircularProgress size={24} /> : 'Upload Meal Data'}
-                        </Button>
-                    </>
-                ) : (
+                    <Button
+                        variant="contained"
+                        fullWidth
+                        size="large"
+                        disabled={loading}
+                        onClick={handlePreviewUpload}
+                    >
+                        {loading ? <CircularProgress size={24} /> : 'Upload Meal Data'}
+                    </Button>
+                </Box>
+
+                {/* Preview section - sirf jab isPreviewMode true ho */}
+                {isPreviewMode && (
                     <>
-                        <Typography variant="h5" gutterBottom>Preview & Edit Nos</Typography>
+                        <Typography variant="h5" gutterBottom sx={{ mb: 3 }}>
+                            Preview & Edit Nos
+                        </Typography>
 
-                        <Typography variant="h6" sx={{ mt: 3, mb: 1 }}>Main Table</Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={() => exportToExcel(mainTableData, mainColumns, 'Meal_Main_Data')}
-                                >
-                                    Export Excel
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={() => exportToCSV(mainTableData, mainColumns, 'Meal_Main_Data')}
-                                >
-                                    Export CSV
-                                </Button>
-                            </Box>
-                        <Box sx={{ height: 400, width: '100%', mb: 4 }}>
-                            <DataGrid
-                                rows={mainTableData}
-                                columns={mainColumns}
-                                pageSizeOptions={[10, 25]}
-                                editMode="cell"
-                                processRowUpdate={handleProcessRowUpdate}
-                                disableRowSelectionOnClick
-                                    slotProps={{
-                                        toolbar: {
-                                            showQuickFilter: true,         
-                                            quickFilterProps: { debounceMs: 300 },
-                                        },
+                        {hasDataLoaded ? (
+                            <>
+                                {/* Main Table Section */}
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        mb: 3,
                                     }}
-                            />
-                        </Box>
-
-                        <Divider sx={{ my: 4 }} />
-
-                        <Typography variant="h6" sx={{ mb: 1 }}>Summary</Typography>
-                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={() => exportToExcel(summaryTableData, summaryColumns, 'Meal_Summary')}
                                 >
-                                    Export Excel
-                                </Button>
-                                <Button
-                                    size="small"
-                                    variant="outlined"
-                                    onClick={() => exportToCSV(summaryTableData, summaryColumns, 'Meal_Summary')}
-                                >
-                                    Export CSV
-                                </Button>
-                            </Box>
-                        <Box sx={{ height: 300, width: '100%', mb: 4 }}>
-                            <DataGrid
-                                rows={summaryTableData}
-                                columns={summaryColumns}
-                                pageSizeOptions={[5, 10]}
-                                    slotProps={{
-                                        toolbar: {
-                                            showQuickFilter: true,
-                                            quickFilterProps: { debounceMs: 300 },
-                                        },
+                                    <TextField
+                                        key="employee-search"
+                                        size="small"
+                                        label="Search employees..."
+                                        value={searchText}
+                                        onChange={(e) => {
+                                            setSearchText(e.target.value);
+                                            setPage(0);
+                                        }}
+                                        sx={{ width: 300 }}
+                                    />
+
+                                    <Box>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => exportToExcel(filteredData, 'Meal_Main_Data')}
+                                            sx={{ mr: 1 }}
+                                        >
+                                            Export Excel
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => exportToCSV(filteredData, 'Meal_Main_Data')}
+                                        >
+                                            Export CSV
+                                        </Button>
+                                    </Box>
+                                </Box>
+
+                                <TableContainer component={Paper} sx={{ mb: 3, maxHeight: 500 }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Emp Code</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Name</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Department</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Nos (Meals)</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Zone</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Column1</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {filteredData.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                                                        No Data Found
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                filteredData
+                                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                                    .map((row) => (
+                                                        <TableRow key={row.id} hover>
+                                                            <TableCell>{row.empcode}</TableCell>
+                                                            <TableCell>{row.empName || '-'}</TableCell>
+                                                            <TableCell>{row.department || '-'}</TableCell>
+                                                            <TableCell>
+                                                                <TextField
+                                                                    size="small"
+                                                                    value={row.nos}
+                                                                    onChange={(e) => handleNosChange(row.id, Number(e.target.value))}
+                                                                    sx={{ width: 90 }}
+                                                                />
+                                                            </TableCell>
+                                                            <TableCell>{row.ezone || '-'}</TableCell>
+                                                            <TableCell>{row.column1 ?? 0}</TableCell>
+                                                        </TableRow>
+                                                    ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+
+                                <TablePagination
+                                    rowsPerPageOptions={[5, 10, 25, 50, 100]}
+                                    component="div"
+                                    count={filteredData.length}
+                                    rowsPerPage={rowsPerPage}
+                                    page={page}
+                                    onPageChange={handleChangePage}
+                                    onRowsPerPageChange={handleChangeRowsPerPage}
+                                />
+
+                                <Divider sx={{ my: 5 }} />
+
+                                {/* Summary Section */}
+                                <Typography variant="h6" gutterBottom>
+                                    Summary by Zone
+                                </Typography>
+
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        mb: 3,
                                     }}
-                            />
-                        </Box>
+                                >
+                                    <TextField
+                                        key="summary-search"
+                                        size="small"
+                                        label="Search zone..."
+                                        value={searchTextSummary}
+                                        onChange={(e) => {
+                                            setSearchTextSummary(e.target.value);
+                                            setSummaryPage(0);
+                                        }}
+                                        sx={{ width: 300 }}
+                                    />
 
-                        <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center' }}>
-                            <Button variant="outlined" onClick={() => setIsPreviewMode(false)} disabled={loading}>
-                                Back
-                            </Button>
-                            <Button variant="contained" color="success" onClick={handleFinalSubmit} disabled={loading}>
-                                {loading ? <CircularProgress size={24} color="inherit" /> : 'Final Submit'}
-                            </Button>
-                        </Box>
+                                    <Box>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => exportToExcel(filteredSummaryData, 'Meal_Summary')}
+                                            sx={{ mr: 1 }}
+                                        >
+                                            Export Excel
+                                        </Button>
+                                        <Button
+                                            size="small"
+                                            variant="outlined"
+                                            onClick={() => exportToCSV(filteredSummaryData, 'Meal_Summary')}
+                                        >
+                                            Export CSV
+                                        </Button>
+                                    </Box>
+                                </Box>
+
+                                <TableContainer component={Paper} sx={{ mb: 3 }}>
+                                    <Table size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }}>Zone</TableCell>
+                                                <TableCell sx={{ fontWeight: 'bold', bgcolor: '#f5f5f5' }} align="right">
+                                                    Total Meals
+                                                </TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {filteredSummaryData.length === 0 ? (
+                                                <TableRow>
+                                                    <TableCell colSpan={2} align="center" sx={{ py: 3 }}>
+                                                        No matching zones
+                                                    </TableCell>
+                                                </TableRow>
+                                            ) : (
+                                                filteredSummaryData
+                                                    .slice(
+                                                        summaryPage * summaryRowsPerPage,
+                                                        summaryPage * summaryRowsPerPage + summaryRowsPerPage
+                                                    )
+                                                    .map((row) => (
+                                                        <TableRow key={row.id} hover>
+                                                            <TableCell>{row.ezone}</TableCell>
+                                                            <TableCell align="right">{row.column1.toLocaleString()}</TableCell>
+                                                        </TableRow>
+                                                    ))
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+
+                                <TablePagination
+                                    rowsPerPageOptions={[5, 10, 20]}
+                                    component="div"
+                                    count={filteredSummaryData.length}
+                                    rowsPerPage={summaryRowsPerPage}
+                                    page={summaryPage}
+                                    onPageChange={handleChangeSummaryPage}
+                                    onRowsPerPageChange={handleChangeSummaryRowsPerPage}
+                                />
+
+                                {/* Final Submit button */}
+                                <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', mt: 5 }}>
+                                    <Button
+                                        variant="contained"
+                                        color="success"
+                                        onClick={handleFinalSubmit}
+                                        disabled={loading}
+                                        sx={{ minWidth: 200 }}
+                                    >
+                                        {loading ? <CircularProgress size={24} color="inherit" /> : 'Final Submit'}
+                                    </Button>
+                                </Box>
+                            </>
+                        ) : (
+                            <Box sx={{ textAlign: 'center', py: 8 }}>
+                                <CircularProgress size={60} />
+                                <Typography variant="h6" sx={{ mt: 3, color: 'text.secondary' }}>
+                                    Loading preview data from server...
+                                </Typography>
+                                <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                                    Please wait a moment
+                                </Typography>
+                            </Box>
+                        )}
                     </>
                 )}
             </CardContent>

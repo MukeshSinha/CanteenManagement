@@ -27,10 +27,12 @@ import * as XLSX from 'xlsx';
 import { apiFetch } from '../src/utils/api';
 
 // ────────────────────────────────────────────────
-// Types (unchanged)
+// Types – Updated to match your actual API response
+
 interface Rate {
-    irate: number;
-    wefDate: string;
+    rate?: number;
+    irate?: number;
+    wefDate?: string;
 }
 
 interface ItemRequest {
@@ -38,37 +40,32 @@ interface ItemRequest {
     itemName: string;
     itemType: number;
     rate?: Rate;
-    
 }
 
-interface UpdatePayload extends ItemRequest {
-    previousRate?: Rate;
-    previousWefDate?: string;
-}
+
 
 // ────────────────────────────────────────────────
-// API Base – change to your real URL
-//const API_BASE = 'http://your-backend-url/api';
-
-// API Functions (mostly unchanged, just fixed delete URL consistency)
+// API Functions
 const saveItemMaster = async (payload: ItemRequest): Promise<boolean> => {
     try {
-        let res = await apiFetch(`ItemMaster/SaveItemMaster`, {
+
+        const res = await apiFetch(`ItemMaster/SaveItemMaster`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
         });
-        res = typeof res === 'string' ? JSON.parse(res) : res;
-        console.log("Response from saveItemMaster is:", res);   
-        if (res?.statusCode === 1) {
-            await Swal.fire({ icon: 'success', title: 'Saved!', text: 'Item Master saved successfully', timer: 2000 });
+        const data = typeof res === 'string' ? JSON.parse(res) : res;
+        console.log("saveItemMaster response:", data);
+
+        if (data?.statusCode === 1) {
+            await Swal.fire({ icon: 'success', title: 'Saved!', text: 'Item saved successfully', timer: 2000 });
             return true;
-        }
-        else {
-            await Swal.fire({ icon: 'error', title: 'Error', text: res?.message || 'Failed to save item' });
+        } else {
+            await Swal.fire({ icon: 'error', title: 'Error', text: data?.message || 'Failed to save' });
             return false;
         }
-    } catch {
+    } catch (err) {
+        console.error(err);
         await Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save item' });
         return false;
     }
@@ -76,48 +73,88 @@ const saveItemMaster = async (payload: ItemRequest): Promise<boolean> => {
 
 const getItemMaster = async (itemCode: number): Promise<ItemRequest | null> => {
     try {
-        const res = await apiFetch(`ItemMaster/getItemMaster/${itemCode}`);
-        if (!res.ok) throw new Error();
-        return await res.json();
-    } catch {
+        let res = await apiFetch(`ItemMaster/getItemMaster?itemCode=${itemCode}`);
+
+        // Handle if apiFetch returns string (rare) or already parsed object
+        res = typeof res === 'string' ? JSON.parse(res) : res;
+
+        // Extract the single item from the usual structure
+        const table = res?.dataFetch?.table;
+
+        if (!Array.isArray(table) || table.length === 0) {
+            console.warn(`No item found for code ${itemCode}`);
+            return null;
+        }
+
+        // Return ONLY the first item (single object)
+        const singleItem = table[0];
+
+        // Optional: quick validation
+        if (!singleItem?.itemCode) {
+            console.warn("Invalid item format received");
+            return null;
+        }
+
+        return singleItem;
+    } catch (err) {
+        console.error("getItemMaster error:", err);
         return null;
     }
 };
 
-const updateItemMaster = async (payload: UpdatePayload): Promise<boolean> => {
+const updateItemMaster = async (payload: ItemRequest): Promise<boolean> => {
     try {
         const res = await apiFetch(`ItemMaster/UpdateItemMaster`, {
-            method: 'PUT',
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error();
-        await Swal.fire({ icon: 'success', title: 'Updated!', text: 'Rate updated successfully', timer: 2000 });
-        return true;
-    } catch {
+        const data = typeof res === 'string' ? JSON.parse(res) : res;
+        if (data?.statusCode == 1) {
+            await Swal.fire({ icon: 'success', title: 'Updated!', text: 'Rate updated successfully', timer: 2000 });
+            return true;
+        }
+        else {
+            await Swal.fire({ icon: 'error', title: 'Error', text: res?.message || 'Failed to update rate' });
+            return false;
+        }
+    } catch (err) {
+        console.error(err);
         await Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to update rate' });
         return false;
     }
 };
 
-const getAllItemMasters = async () => {
+const getAllItemMasters = async (): Promise<ItemRequest[]> => {
     try {
         const res = await apiFetch(`ItemMaster/getItemMaster`);
-        console.log("response of item master is:",res)
-        return await res
-    } catch {
+        let data = typeof res === 'string' ? JSON.parse(res) : res;
+
+        const table = data?.dataFetch?.table ?? [];
+
+        return table.map((item: any) => ({
+            itemCode: item.itemCode,
+            itemName: item.itemName,
+            itemType: item.itemType,
+            rate: {
+                irate: item.rate,
+                wefDate: item.wefDate
+            }
+        }));
+    } catch (err) {
+        console.error(err);
         return [];
     }
 };
 
 const deleteItemMaster = async (itemCode: number): Promise<boolean> => {
     try {
-        // Made consistent with other endpoints (assuming same base)
         const res = await apiFetch(`ItemMaster/${itemCode}`, { method: 'DELETE' });
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error('Delete failed');
         await Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Item deleted successfully', timer: 2000 });
         return true;
-    } catch {
+    } catch (err) {
+        console.error(err);
         await Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to delete item' });
         return false;
     }
@@ -134,14 +171,14 @@ const getItemTypeLabel = (type: number): string => {
 };
 
 const ItemMaster = () => {
-    // Left Card - New Item / Edit
+    // Left form (Add / Edit)
     const [itemCode, setItemCode] = useState<number | ''>('');
     const [itemName, setItemName] = useState('');
     const [itemType, setItemType] = useState<number | null>(null);
     const [rate, setRate] = useState<number | ''>('');
     const [wefDate, setWefDate] = useState<string>('');
 
-    // Right Card - Rate Update (shows previous + allows new rate)
+    // Right form (Rate Update)
     const [selectedItem, setSelectedItem] = useState<ItemRequest | null>(null);
     const [newRate, setNewRate] = useState<number | ''>('');
     const [newWefDate, setNewWefDate] = useState<string>('');
@@ -151,33 +188,38 @@ const ItemMaster = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const loadAllItems = async () => {
-        let data = await getAllItemMasters();
-        data = typeof data === 'string' ? JSON.parse(data) : data; 
-        const result = data?.dataFetch?.table|| [];
-        console.log("Item master data is:", result);
-        setAllItems(result);
+        const items = await getAllItemMasters();
+        setAllItems(items);
     };
 
     useEffect(() => {
         loadAllItems();
     }, []);
 
-    // When user clicks Edit → fill left form + load right card data
     const handleEdit = async (code: number) => {
-        const item = await getItemMaster(code);
-        if (!item) {
+        const result = await getItemMaster(code);
+        console.log("Fetched item for edit:", result);
+
+        if (!result) {
             Swal.fire({ icon: 'error', title: 'Not found', text: 'Item not found' });
+            return;
+        }
+
+        // Extra safety: in case it still returns array
+        const item = Array.isArray(result) && result.length > 0 ? result[0] : result;
+
+        if (!item?.itemCode) {
+            Swal.fire({ icon: 'error', title: 'Invalid data', text: 'Invalid item format' });
             return;
         }
 
         setItemCode(item.itemCode);
         setItemName(item.itemName);
         setItemType(item.itemType);
-        setRate(item.rate?.irate ?? '');
-        setWefDate(item.rate?.wefDate ?? '');
-
-        setSelectedItem(item);       // also updates right card
-        setNewRate('');              // reset new rate fields
+        setRate(item.rate ?? '');
+        setWefDate(item.wefDate?.split('T')[0] ?? '');
+        setSelectedItem(item);
+        setNewRate('');
         setNewWefDate('');
     };
 
@@ -196,8 +238,13 @@ const ItemMaster = () => {
         const payload: ItemRequest = {
             itemCode: Number(itemCode),
             itemName,
-            itemType,
-            rate: rate && wefDate ? { irate: Number(rate), wefDate } : undefined,
+            itemType: itemType!,
+            rate: rate
+                ? {
+                    irate: Number(rate),
+                    wefDate: wefDate || ''
+                }
+                : undefined
         };
 
         const success = await saveItemMaster(payload);
@@ -219,19 +266,24 @@ const ItemMaster = () => {
     };
 
     const handleUpdateRate = async () => {
-        if (!selectedItem || !newRate || !newWefDate) {
-            await Swal.fire({ icon: 'warning', title: 'Missing Fields', text: 'New Rate and New WEF Date are required!' });
+        if (!selectedItem || !wefDate || !rate) {
+            await Swal.fire({ icon: 'warning', title: 'Missing Fields', text: 'All Fields  are required!' });
             return;
         }
 
-        const payload: UpdatePayload = {
-            ...selectedItem,
-            rate: { irate: Number(newRate), wefDate: newWefDate },
-            previousRate: selectedItem.rate,
-            previousWefDate: selectedItem.rate?.wefDate,
+        const payload: ItemRequest = {
+            itemCode: Number(itemCode),
+            itemName,
+            itemType: itemType!,
+            rate: rate
+                ? {
+                    irate: Number(rate),
+                    wefDate: wefDate || ''
+                }
+                : undefined
         };
-
         const success = await updateItemMaster(payload);
+        console.log("Update response:", success);
         if (success) {
             const updated = await getItemMaster(selectedItem.itemCode);
             if (updated) setSelectedItem(updated);
@@ -256,15 +308,15 @@ const ItemMaster = () => {
         }
     };
 
-    // Export functions (unchanged)
+    // Export functions
     const exportToCSV = () => {
         const headers = ['Item Code', 'Item Name', 'Item Type', 'Rate', 'WEF Date'];
         const rows = allItems.map(item => [
             item.itemCode,
-            `"${item.itemName}"`,
+            `"${item.itemName.replace(/"/g, '""')}"`,
             getItemTypeLabel(item.itemType),
-            item.rate?.irate || '',
-            item.rate?.wefDate || '',
+            item?.rate?.rate ?? '',
+            item?.rate?.wefDate ?? '',
         ]);
         const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -279,8 +331,8 @@ const ItemMaster = () => {
             'Item Code': item.itemCode,
             'Item Name': item.itemName,
             'Item Type': getItemTypeLabel(item.itemType),
-            'Rate': item.rate?.irate || '',
-            'WEF Date': item.rate?.wefDate || '',
+            'Rate': item?.rate?.rate ?? '',
+            'WEF Date': item?.rate?.wefDate ?? '',
         }));
         const ws = XLSX.utils.json_to_sheet(data);
         const wb = XLSX.utils.book_new();
@@ -295,7 +347,7 @@ const ItemMaster = () => {
             </Typography>
 
             <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4 }}>
-                {/* LEFT CARD - Add / Edit Item */}
+                {/* LEFT CARD - Add / Edit */}
                 <Card sx={{ flex: 1 }}>
                     <CardContent>
                         <Typography variant="h6" gutterBottom>
@@ -307,32 +359,32 @@ const ItemMaster = () => {
                                 label="Item Code"
                                 type="number"
                                 value={itemCode}
-                                onChange={(e) => setItemCode(e.target.value ? Number(e.target.value) : '')}
+                                onChange={e => setItemCode(e.target.value ? Number(e.target.value) : '')}
                                 size="small"
-                                disabled={!!selectedItem} // optional: prevent changing code while editing
+                                disabled={!!selectedItem}
                             />
                             <TextField
                                 fullWidth
                                 label="Item Name"
                                 value={itemName}
-                                onChange={(e) => setItemName(e.target.value)}
+                                onChange={e => setItemName(e.target.value)}
                                 size="small"
                             />
                             <Autocomplete
                                 fullWidth
                                 size="small"
                                 options={ITEM_TYPES}
-                                getOptionLabel={(opt) => opt.label}
+                                getOptionLabel={opt => opt.label}
                                 value={ITEM_TYPES.find(opt => opt.value === itemType) || null}
                                 onChange={(_, val) => setItemType(val?.value ?? null)}
-                                renderInput={(params) => <TextField {...params} label="Item Type" />}
+                                renderInput={params => <TextField {...params} label="Item Type" />}
                             />
                             <TextField
                                 fullWidth
                                 label="Rate"
                                 type="number"
                                 value={rate}
-                                onChange={(e) => setRate(e.target.value === '' ? '' : Number(e.target.value))}
+                                onChange={e => setRate(e.target.value === '' ? '' : Number(e.target.value))}
                                 size="small"
                             />
                             <TextField
@@ -340,18 +392,20 @@ const ItemMaster = () => {
                                 label="WEF Date"
                                 type="date"
                                 value={wefDate}
-                                onChange={(e) => setWefDate(e.target.value)}
+                                onChange={e => setWefDate(e.target.value)}
                                 InputLabelProps={{ shrink: true }}
                                 size="small"
                             />
-
                             <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                                <Button variant="contained" onClick={handleSaveNewItem}>
-                                    {itemCode ? 'Update Item' : 'Save Item Master'}
+                                <Button
+                                    variant="contained"
+                                    onClick={selectedItem ? handleUpdateRate : handleSaveNewItem}
+                                >
+                                    {selectedItem ? 'Update Item' : 'Save Item'}
                                 </Button>
                                 {itemCode && (
                                     <Button variant="outlined" color="inherit" onClick={resetLeftForm}>
-                                        Cancel Edit
+                                        Cancel
                                     </Button>
                                 )}
                             </Box>
@@ -370,21 +424,20 @@ const ItemMaster = () => {
                                 </Typography>
                                 <List dense disablePadding>
                                     <ListItem disableGutters>
-                                        <ListItemText primary="Previous Rate" secondary={selectedItem.rate?.irate ?? '—'} />
+                                        <ListItemText primary="Previous Rate" secondary={selectedItem?.rate?.rate ?? '—'} />
                                     </ListItem>
                                     <Divider />
                                     <ListItem disableGutters>
-                                        <ListItemText primary="Previous WEF Date" secondary={selectedItem.rate?.wefDate ?? '—'} />
+                                        <ListItemText primary="Previous WEF Date" secondary={selectedItem?.rate?.wefDate ?? '—'} />
                                     </ListItem>
                                 </List>
-
                                 <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                                     <TextField
                                         fullWidth
                                         label="New WEF Date"
                                         type="date"
                                         value={newWefDate}
-                                        onChange={(e) => setNewWefDate(e.target.value)}
+                                        onChange={e => setNewWefDate(e.target.value)}
                                         InputLabelProps={{ shrink: true }}
                                         size="small"
                                     />
@@ -393,11 +446,10 @@ const ItemMaster = () => {
                                         label="New Rate"
                                         type="number"
                                         value={newRate}
-                                        onChange={(e) => setNewRate(e.target.value === '' ? '' : Number(e.target.value))}
+                                        onChange={e => setNewRate(e.target.value === '' ? '' : Number(e.target.value))}
                                         size="small"
                                     />
                                 </Box>
-
                                 <Button
                                     variant="contained"
                                     color="secondary"
@@ -410,7 +462,7 @@ const ItemMaster = () => {
                             </Box>
                         ) : (
                             <Typography color="text.secondary" sx={{ mt: 4 }}>
-                                Select an item using the edit icon (✏️) to update its rate...
+                                Select an item using the edit icon to update its rate...
                             </Typography>
                         )}
                     </CardContent>
@@ -435,7 +487,7 @@ const ItemMaster = () => {
                             variant="outlined"
                             size="small"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={e => setSearchTerm(e.target.value)}
                             sx={{ mb: 3 }}
                         />
 
@@ -453,13 +505,13 @@ const ItemMaster = () => {
                                 </TableHead>
                                 <TableBody>
                                     {filteredItems.length > 0 ? (
-                                        filteredItems.map((item) => (
+                                        filteredItems.map(item => (
                                             <TableRow key={item.itemCode}>
                                                 <TableCell>{item.itemCode}</TableCell>
                                                 <TableCell>{item.itemName}</TableCell>
                                                 <TableCell>{getItemTypeLabel(item.itemType)}</TableCell>
-                                                <TableCell>{item.rate?.irate ?? '—'}</TableCell>
-                                                <TableCell>{item.rate?.wefDate ?? '—'}</TableCell>
+                                                <TableCell>{item?.rate?.irate ?? '—'}</TableCell>
+                                                <TableCell>{item?.rate?.wefDate?.split('T')[0] ?? '—'}</TableCell>
                                                 <TableCell align="center">
                                                     <IconButton color="primary" onClick={() => handleEdit(item.itemCode)}>
                                                         <EditIcon />

@@ -24,7 +24,16 @@ namespace CanteenManagement.Controllers
         {
             string url = ApiService.Canteen + $"Masters/Items/List?itemcode={itemCode}";
             var mHeader = _headers.GetHeaders();
-            var response = await apiConsume.SendRequestAsync(url, HttpMethod.Post, mHeader, null);
+            var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+            return Content(response, "application/json");
+        }
+
+        [HttpGet("getItemDateList")]
+        public async Task<IActionResult> getItemDateList(string? itemCode = null)
+        {
+            string url = ApiService.Canteen + $"Masters/Items/DateList?itemcode={itemCode}";
+            var mHeader = _headers.GetHeaders();
+            var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
             return Content(response, "application/json");
         }
 
@@ -54,7 +63,7 @@ namespace CanteenManagement.Controllers
                 return BadRequest(ModelState);
             }
 
-            string url = ApiService.Canteen + "/Masters/Items/Add";
+            string url = ApiService.Canteen + "Masters/Items/Update";
             string postData = JsonConvert.SerializeObject(itemRequest);
             var mHeader = _headers.GetHeaders();
             var response = await apiConsume.SendRequestAsync(url, HttpMethod.Post, mHeader, null, postData);
