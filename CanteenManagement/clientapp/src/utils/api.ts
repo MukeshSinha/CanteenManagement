@@ -1,23 +1,30 @@
-﻿// src/utils/api.ts   (ya jahan tumhare API calls define hain)
+// src/utils/api.ts   (ya jahan tumhare API calls define hain)
 
 function getApiBase(): string {
-    const pathname = window.location.pathname;
+    // 1. If the C# backend has injected the real base href (e.g. "/" or "/canteen/"), use it!
+    const baseHref = (window as any).__BASE_HREF__;
+    if (baseHref) {
+        const cleanBase = baseHref.endsWith('/') ? baseHref : baseHref + '/';
+        return cleanBase + 'api';
+    }
 
-    // pathname ko clean parts mein tod do (empty strings hata do)
+    // 2. Fallback to extracting base path, but ignore common React routes to avoid errors
+    const pathname = window.location.pathname;
     const parts = pathname.split('/').filter(part => part.length > 0);
 
-    // Agar koi sub-directory hai (pehla part folder name hai)
-    if (parts.length > 0) {
-        const firstPart = parts[0];
+    // List of known top-level React routes that are NOT subdirectories
+    const reactRoutes = ['login', 'password', 'masters', 'reports', 'settings', 'profile'];
 
-        // Yeh check karte hain ki pehla part '/api' jaisa API path to nahi hai
-        // (agar pathname mein '/api/' already shuru se hai to prepend mat karo)
-        if (!pathname.toLowerCase().startsWith('/api/')) {
-            return `/${firstPart}/api`;
+    if (parts.length > 0) {
+        const firstPart = parts[0].toLowerCase();
+
+        // If the first part is not an API path and not a known React route, it might be a real sub-directory (like IIS virtual dir)
+        if (firstPart !== 'api' && !reactRoutes.includes(firstPart)) {
+            return `/${parts[0]}/api`;
         }
     }
 
-    // Root pe ya agar pehla part already API related lag raha hai
+    // Default fallback
     return '/api';
 }
 

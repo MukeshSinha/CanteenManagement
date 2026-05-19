@@ -1,0 +1,293 @@
+/* clientapp/Components/Login.css */
+
+.login-page-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(-45deg, #0f172a, #1e1b4b, #2e1065, #0f172a);
+    background-size: 400% 400%;
+    animation: gradientMove 15s ease infinite;
+    position: relative;
+    overflow: hidden;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    padding: 20px;
+}
+
+/* Ambient glow bubbles */
+.login-page-container::before,
+.login-page-container::after {
+    content: '';
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    filter: blur(120px);
+    opacity: 0.4;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.login-page-container::before {
+    background: #4f46e5;
+    top: 15%;
+    left: 20%;
+    animation: floatBubble1 8s ease-in-out infinite alternate;
+}
+
+.login-page-container::after {
+    background: #06b6d4;
+    bottom: 15%;
+    right: 20%;
+    animation: floatBubble2 8s ease-in-out infinite alternate;
+}
+
+@keyframes gradientMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes floatBubble1 {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-40px) scale(1.2); }
+}
+
+@keyframes floatBubble2 {
+    0% { transform: translateY(0) scale(1.2); }
+    100% { transform: translateY(40px) scale(0.9); }
+}
+
+/* Glassmorphism login card */
+.glass-login-card {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 24px;
+    padding: 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4),
+                0 0 100px rgba(79, 70, 229, 0.15);
+    z-index: 10;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    animation: cardAppear 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes cardAppear {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Shake animation on invalid login */
+.card-shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+    20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+/* Portal header styling */
+.portal-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.portal-brand .brand-icon-box {
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(6, 182, 212, 0.2));
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    font-size: 2.2rem;
+    color: #38bdf8;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.glass-login-card:hover .brand-icon-box {
+    transform: rotate(8deg) scale(1.05);
+}
+
+.portal-title {
+    color: #f8fafc;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.portal-subtitle {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-top: 6px;
+}
+
+/* Beautiful user pill when on password screen */
+.user-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 16px 8px 12px;
+    border-radius: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 25px;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    align-self: center;
+}
+
+.user-pill-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #06b6d4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+/* Input Styles */
+.custom-input-group {
+    position: relative;
+    margin-bottom: 25px;
+}
+
+.custom-input-group label {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.custom-form-input {
+    width: 100%;
+    padding: 16px 16px 16px 44px; /* Space for prepended icons */
+    background: rgba(255, 255, 255, 0.03);
+    border: 1.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    color: #f8fafc;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.custom-form-input:focus {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: #6366f1;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.25);
+}
+
+/* Input icon integration */
+.input-icon-left {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #64748b;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.custom-form-input:focus ~ .input-icon-left {
+    color: #818cf8;
+}
+
+/* Password toggler */
+.password-toggle-btn {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 0;
+    transition: all 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+    color: #e2e8f0;
+}
+
+/* Float logic for custom input */
+.custom-form-input:focus ~ label,
+.custom-form-input:not(:placeholder-shown) ~ label {
+    top: 0;
+    transform: translateY(-50%) scale(0.85);
+    background: #0f172a;
+    padding: 0 6px;
+    color: #818cf8;
+    left: 12px;
+}
+
+/* Custom glowing button */
+.glow-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+    border: none;
+    border-radius: 14px;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(79, 70, 229, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.glow-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(79, 70, 229, 0.45);
+    filter: brightness(1.08);
+}
+
+.glow-btn:active {
+    transform: translateY(0);
+}
+
+/* Back navigation */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #64748b;
+    font-size: 0.85rem;
+    text-decoration: none;
+    margin-top: 20px;
+    transition: color 0.2s ease;
+    cursor: pointer;
+}
+
+.back-link:hover {
+    color: #cbd5e1;
+}
