@@ -1,4 +1,6 @@
-﻿import {
+import { useState, useEffect } from 'react';
+import { apiFetch } from '../src/utils/api';
+import {
     Box,
     Card,
     CardContent,
@@ -13,28 +15,10 @@
     Paper,
     Divider,
 } from '@mui/material';
-import {
-    Restaurant as DinnerIcon,
-    BreakfastDining as BreakfastIcon,
-    LunchDining as LunchIcon,
-    People as PeopleIcon,
-    AttachMoney as MoneyIcon,
-} from '@mui/icons-material';
+
 import { BarChart } from '@mui/x-charts/BarChart';
 import { LineChart } from '@mui/x-charts/LineChart';
 
-// Sample data (replace with real data / state / API later)
-const stats = {
-    employeesServed: 235,
-    changeEmployees: -6,
-    breakfasts: 80,
-    changeBreakfast: 1,
-    lunches: 120,
-    changeLunch: 3,
-    dinners: 35,
-    changeDinner: 4,
-    todayCollection: 5400,
-};
 
 const weeklyTrendData = {
     days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -59,6 +43,42 @@ const monthlySummary = [
 ];
 
 function CanteenDashboard() {
+    interface DashboardData {
+        todayPunch: number;
+        employeeStats: Record<string, number> | null;
+    }
+
+    const [dashboardData, setDashboardData] = useState<DashboardData>({
+        todayPunch: 0,
+        employeeStats: null,
+    });
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const response = await apiFetch('Canteen-Dashboard/get-admin-dashboard');
+                let data = response;
+                if (typeof data === 'string') {
+                    data = JSON.parse(data);
+                }
+                
+                const table = data?.dataFetch?.table || [];
+                const table1 = data?.dataFetch?.table1 || [];
+                
+                const todayPunch = table[0]?.todayPunch || 0;
+                const employeeStats = table1[0] || null;
+                
+                setDashboardData({
+                    todayPunch,
+                    employeeStats,
+                });
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+            }
+        };
+        fetchDashboardData();
+    }, []);
+
     return (
         <Box sx={{ p: 3, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
             <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 600 }}>
@@ -72,90 +92,78 @@ function CanteenDashboard() {
                     flexWrap: 'wrap',
                     gap: 3,
                     mb: 4,
+                    alignItems: 'flex-start',
                 }}
             >
-                {/* Employees Served */}
+                {/* Today Punch */}
                 <Card sx={{ flex: '1 1 180px', maxWidth: 220, bgcolor: '#1976d2', color: 'white', borderRadius: 3 }}>
                     <CardContent sx={{ textAlign: 'center', pb: 2 }}>
-                        <PeopleIcon sx={{ fontSize: 40, mb: 1 }} />
-                        <Typography variant="subtitle2">Employees Served</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                            {stats.employeesServed}
+                        <Typography variant="subtitle2">Today Punch</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
+                            {dashboardData.todayPunch}
                         </Typography>
-                        <Chip
-                            size="small"
-                            label={`${stats.changeEmployees > 0 ? '+' : ''}${stats.changeEmployees}`}
-                            color={stats.changeEmployees > 0 ? 'success' : 'error'}
-                            sx={{ mt: 1, bgcolor: 'rgba(255,255,255,0.25)' }}
-                        />
                     </CardContent>
                 </Card>
 
-                {/* Breakfasts */}
-                <Card sx={{ flex: '1 1 180px', maxWidth: 220, bgcolor: '#f57c00', color: 'white', borderRadius: 3 }}>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                        <BreakfastIcon sx={{ fontSize: 40, mb: 1 }} />
-                        <Typography variant="subtitle2">Breakdowns</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                            {stats.breakfasts}
-                        </Typography>
-                        <Chip
-                            size="small"
-                            label={`+${stats.changeBreakfast}`}
-                            color="success"
-                            sx={{ mt: 1, bgcolor: 'rgba(255,255,255,0.25)' }}
-                        />
+                {/* Employee Card with dynamic sub-data list */}
+                <Card sx={{ flex: '1 1 200px', maxWidth: 240, bgcolor: '#f57c00', color: 'white', borderRadius: 3 }}>
+                    <CardContent sx={{ textAlign: 'center', p: 2 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 1.5 }}>Employee</Typography>
+                        
+                        {dashboardData.employeeStats && (
+                            <Box sx={{ 
+                                display: 'grid', 
+                                gridTemplateColumns: 'repeat(2, 1fr)', 
+                                gap: 0.5, 
+                                borderTop: '1px solid rgba(255,255,255,0.2)', 
+                                pt: 1.5,
+                                fontSize: '0.72rem',
+                                textAlign: 'left',
+                                px: 1
+                            }}>
+                                {Object.entries(dashboardData.employeeStats)
+                                    .filter(([key]) => !['total', 'toa', 'naps', 'fot'].includes(key.toLowerCase()))
+                                    .map(([key, val]) => {
+                                        const label = key.toLowerCase() === 'worker' ? 'Workers' : key.charAt(0).toUpperCase() + key.slice(1);
+                                        return (
+                                            <div key={key}>
+                                                {label}: {Number(val) || 0}
+                                            </div>
+                                        );
+                                    })
+                                }
+                            </Box>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* Lunches */}
+                {/* Toa */}
                 <Card sx={{ flex: '1 1 180px', maxWidth: 220, bgcolor: '#388e3c', color: 'white', borderRadius: 3 }}>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                        <LunchIcon sx={{ fontSize: 40, mb: 1 }} />
-                        <Typography variant="subtitle2">Lunches</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                            {stats.lunches}
+                    <CardContent sx={{ textAlign: 'center', pb: 2 }}>
+                        <Typography variant="subtitle2">Toa</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
+                            {dashboardData.employeeStats?.toa ?? 0}
                         </Typography>
-                        <Chip
-                            size="small"
-                            label={`+${stats.changeLunch}`}
-                            color="success"
-                            sx={{ mt: 1, bgcolor: 'rgba(255,255,255,0.25)' }}
-                        />
                     </CardContent>
                 </Card>
 
-                {/* Dinners */}
+                {/* Naps */}
                 <Card sx={{ flex: '1 1 180px', maxWidth: 220, bgcolor: '#0288d1', color: 'white', borderRadius: 3 }}>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                        <DinnerIcon sx={{ fontSize: 40, mb: 1 }} />
-                        <Typography variant="subtitle2">Dinners</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                            {stats.dinners}
+                    <CardContent sx={{ textAlign: 'center', pb: 2 }}>
+                        <Typography variant="subtitle2">Naps</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
+                            {dashboardData.employeeStats?.naps ?? 0}
                         </Typography>
-                        <Chip
-                            size="small"
-                            label={`+${stats.changeDinner}`}
-                            color="success"
-                            sx={{ mt: 1, bgcolor: 'rgba(255,255,255,0.25)' }}
-                        />
                     </CardContent>
                 </Card>
 
-                {/* Today's Collection */}
+                {/* Fot */}
                 <Card sx={{ flex: '1 1 180px', maxWidth: 220, bgcolor: '#f57f17', color: 'white', borderRadius: 3 }}>
-                    <CardContent sx={{ textAlign: 'center' }}>
-                        <MoneyIcon sx={{ fontSize: 40, mb: 1 }} />
-                        <Typography variant="subtitle2">Today's Collection</Typography>
-                        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
-                            ₹{stats.todayCollection.toLocaleString()}
+                    <CardContent sx={{ textAlign: 'center', pb: 2 }}>
+                        <Typography variant="subtitle2">Fot</Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
+                            {dashboardData.employeeStats?.fot ?? 0}
                         </Typography>
-                        <Chip
-                            size="small"
-                            label="+1%"
-                            color="success"
-                            sx={{ mt: 1, bgcolor: 'rgba(255,255,255,0.25)' }}
-                        />
                     </CardContent>
                 </Card>
             </Box>

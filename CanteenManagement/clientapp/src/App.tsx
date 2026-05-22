@@ -9,6 +9,7 @@ import UploadMeal from '../Components/UploadMeal';
 import ItemMaster from '../Components/ItemMaster';
 import Login from '../Components/Login';
 import Password from '../Components/Password';
+import MonthlyReport from '../Components/MonthlyReport';
 
 function LogoutAction() {
     sessionStorage.removeItem('isLoggedIn');
@@ -41,7 +42,7 @@ function App() {
         <>
             {/* Show Navigation only if NOT on login/password pages */}
             {!isAuthPage && <NavbarComponent />}
-            
+
             <Routes>
                 {/* Authentication Routes */}
                 <Route path="/login" element={<Login />} />
@@ -51,13 +52,17 @@ function App() {
                 {/* Protected Dashboard and Configuration Routes */}
                 <Route path="/" element={<CanteenDashboard />} />
                 <Route path="/masters/Item-Master" element={<ItemMaster />} />
-                
+
                 <Route path="reports">
                     <Route path="daily-meal">
                         <Route path="shift-wise" element={<ShiftWiseReport />} />
                         <Route path="date-wise" element={<DateWiseReport />} />
                         <Route path="contractor-category" element={<ContractorCategory />} />
                         <Route path="Upload-Meal" element={<UploadMeal />} />
+                    </Route>
+
+                    <Route path="summary">
+                        <Route path="MonthlyMealSummary" element={<MonthlyReport />} />
                     </Route>
                 </Route>
 

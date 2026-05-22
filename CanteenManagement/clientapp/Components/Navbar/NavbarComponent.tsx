@@ -143,12 +143,16 @@ const NavbarComponent: React.FC = () => {
                                     onMouseEnter={() => setShowSummary(true)}
                                     onMouseLeave={() => setShowSummary(false)}
                                 >
-                                    <NavDropdown.Item as={Link} to="/reports/summary/individual">
+                                    {/* <NavDropdown.Item as={Link} to="/reports/summary/individual">
                                         Individual
                                     </NavDropdown.Item>
 
                                     <NavDropdown.Item as={Link} to="/reports/summary/contractor-wise">
                                         Contractor Wise
+                                    </NavDropdown.Item> */}
+
+                                    <NavDropdown.Item as={Link} to="/reports/summary/MonthlyMealSummary">
+                                        Monthly Meal Summary
                                     </NavDropdown.Item>
                                 </NavDropdown>
 
