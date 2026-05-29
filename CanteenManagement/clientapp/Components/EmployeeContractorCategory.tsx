@@ -56,12 +56,12 @@ const EmployeeContractorCategory: React.FC = () => {
     const [upToDate, setUpToDate] = useState<string>('');
     
     // Category options & state
-    const categoriesList = ['ALL', 'Staff', 'Officer', 'Worker', 'DTL', 'Sub', 'Cont', 'NAPS', 'TOA', 'APP', 'FOT'];
-    const [selectedCategory, setSelectedCategory] = useState<string | null>('ALL');
+    const categoriesList = ['Staff', 'Officer', 'Worker', 'DTL', 'Sub', 'Cont', 'NAPS', 'TOA', 'APP', 'FOT'];
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
     // Contractor options & state
-    const [contractors, setContractors] = useState<string[]>(['ALL']);
-    const [selectedContractor, setSelectedContractor] = useState<string | null>('ALL');
+    const [contractors, setContractors] = useState<string[]>([]);
+    const [selectedContractor, setSelectedContractor] = useState<string | null>(null);
     const [contractorLoading, setContractorLoading] = useState<boolean>(false);
 
     // Report states
@@ -99,7 +99,7 @@ const EmployeeContractorCategory: React.FC = () => {
                     ?.map((item: any) => String(item.compName ?? '').trim())
                     ?.filter((name: string) => name) ?? [];
 
-                setContractors(['ALL', ...fetchedList]);
+                setContractors(fetchedList);
             } catch (err) {
                 console.error("Failed to load contractor master list:", err);
             } finally {
@@ -131,11 +131,11 @@ const EmployeeContractorCategory: React.FC = () => {
                 uptodate: upToDate,
             };
 
-            if (selectedCategory && selectedCategory !== 'ALL') {
+            if (selectedCategory) {
                 params.category = selectedCategory;
             }
 
-            if (selectedContractor && selectedContractor !== 'ALL') {
+            if (selectedContractor) {
                 params.contractor = selectedContractor;
             }
 

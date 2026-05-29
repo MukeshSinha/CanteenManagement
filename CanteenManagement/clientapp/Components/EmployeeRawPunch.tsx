@@ -299,6 +299,27 @@ const EmployeeRawPunch: React.FC = () => {
                                 return option?.label || '';
                             }}
                             isOptionEqualToValue={(option, value) => option?.empCode === value?.empCode}
+                            filterOptions={(options, state) => {
+                                const inputValue = state.inputValue.trim().toLowerCase();
+                                if (!inputValue) {
+                                    return options.slice(0, 100);
+                                }
+
+                                const filtered: EmployeeOption[] = [];
+                                for (let i = 0; i < options.length; i++) {
+                                    const opt = options[i];
+                                    if (
+                                        opt.empCode.toLowerCase().includes(inputValue) ||
+                                        opt.empName.toLowerCase().includes(inputValue)
+                                    ) {
+                                        filtered.push(opt);
+                                        if (filtered.length >= 100) {
+                                            break;
+                                        }
+                                    }
+                                }
+                                return filtered;
+                            }}
                             value={selectedEmployee}
                             loading={optionsLoading}
                             onChange={(_, newValue) => {
