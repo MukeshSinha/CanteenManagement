@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Navbar, Nav, NavDropdown, Container } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import "./Navbar.css";
@@ -153,6 +153,12 @@ const NavbarComponent: React.FC = () => {
 
                                     <NavDropdown.Item as={Link} to="/reports/summary/MonthlyMealSummary">
                                         Monthly Meal Summary
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/reports/summary/EmployeeRawPunch">
+                                        Employee Raw punch
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/reports/summary/EmployeeContractorCategory">
+                                        Employee Contractor Category Punch
                                     </NavDropdown.Item>
                                 </NavDropdown>
 

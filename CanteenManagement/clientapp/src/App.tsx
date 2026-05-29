@@ -10,6 +10,8 @@ import ItemMaster from '../Components/ItemMaster';
 import Login from '../Components/Login';
 import Password from '../Components/Password';
 import MonthlyReport from '../Components/MonthlyReport';
+import EmployeeRawPunch from '../Components/EmployeeRawPunch';
+import EmployeeContractorCategory from '../Components/EmployeeContractorCategory';
 
 function LogoutAction() {
     sessionStorage.removeItem('isLoggedIn');
@@ -63,6 +65,8 @@ function App() {
 
                     <Route path="summary">
                         <Route path="MonthlyMealSummary" element={<MonthlyReport />} />
+                        <Route path="EmployeeRawPunch" element={<EmployeeRawPunch />} />
+                        <Route path="EmployeeContractorCategory" element={<EmployeeContractorCategory />} />
                     </Route>
                 </Route>
 
