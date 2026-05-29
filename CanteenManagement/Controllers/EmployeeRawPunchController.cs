@@ -1,6 +1,7 @@
 ﻿using CanteenManagement.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Emit;
 
 namespace CanteenManagement.Controllers
 {
@@ -40,5 +41,15 @@ namespace CanteenManagement.Controllers
             return Content(response, "application/json");
         }
 
+        // Get Employee
+
+        [HttpGet("get-Employee")]
+        public async Task<IActionResult> getEmployee()
+        {
+            string url = ApiService.Canteen + $"Masters/getEmployee";
+            var mHeader = _headers.GetHeaders();
+            var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+            return Content(response, "application/json");
+        }
     }
 }

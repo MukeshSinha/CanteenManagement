@@ -94,50 +94,37 @@ const EmployeeRawPunch: React.FC = () => {
         }
     });
 
-    // Automatically fetch list of employees when dates are selected to populate the autocomplete dropdown
+    // Fetch list of employees on component mount to populate the autocomplete dropdown
     useEffect(() => {
-        const loadAutocompleteOptions = async () => {
-            if (!fromDate || !upToDate) {
-                setEmployeeOptions([allOption]);
-                return;
-            }
-
+        const loadEmployeeDropdown = async () => {
             setOptionsLoading(true);
             try {
-                const queryString = new URLSearchParams({
-                    fromdate: fromDate,
-                    uptodate: upToDate,
-                }).toString();
-
-                const response = await apiFetch(`Employee-RawPunch/employee-punch-category-contractor?${queryString}`);
+                const response = await apiFetch('Employee-RawPunch/get-Employee');
                 let parsedResult = typeof response === 'string' ? JSON.parse(response) : response;
-                const punches = parsedResult?.dataFetch?.table || [];
+                const employees = parsedResult?.dataFetch?.table || [];
 
-                // Extract unique employees
-                const uniqueMap = new Map<string, EmployeeOption>();
-                punches.forEach((item: any) => {
+                const options: EmployeeOption[] = employees.map((item: any) => {
                     const code = String(item.empCode || '').trim();
-                    if (code && !uniqueMap.has(code)) {
-                        uniqueMap.set(code, {
-                            empCode: code,
-                            empName: String(item.empName || '').trim(),
-                            empType: String(item.empType || '').trim(),
-                            dept: String(item.dept || '').trim(),
-                            label: `${code} - ${String(item.empName || '').trim()}`
-                        });
-                    }
+                    const name = String(item.empNAme || '').trim();
+                    const type = String(item.eType || '').trim();
+                    return {
+                        empCode: code,
+                        empName: name,
+                        empType: type,
+                        label: code ? `${code} - ${name}` : name
+                    };
                 });
 
-                setEmployeeOptions([allOption, ...Array.from(uniqueMap.values())]);
+                setEmployeeOptions([allOption, ...options]);
             } catch (err) {
-                console.error("Failed to load unique employee options for autocomplete:", err);
+                console.error("Failed to load employee list for autocomplete:", err);
             } finally {
                 setOptionsLoading(false);
             }
         };
 
-        loadAutocompleteOptions();
-    }, [fromDate, upToDate]);
+        loadEmployeeDropdown();
+    }, []);
 
     const handleShowReport = async () => {
         if (!fromDate || !upToDate) {
@@ -305,37 +292,22 @@ const EmployeeRawPunch: React.FC = () => {
                             }}
                         />
                         <Autocomplete
-                            freeSolo
                             fullWidth
                             options={employeeOptions}
                             getOptionLabel={(option) => {
                                 if (typeof option === 'string') return option;
-                                return option.label || '';
+                                return option?.label || '';
                             }}
+                            isOptionEqualToValue={(option, value) => option?.empCode === value?.empCode}
                             value={selectedEmployee}
                             loading={optionsLoading}
                             onChange={(_, newValue) => {
-                                if (typeof newValue === 'string') {
-                                    setSelectedEmployee({ empCode: newValue, label: newValue, empName: '' });
-                                } else {
-                                    setSelectedEmployee(newValue);
-                                }
-                            }}
-                            onInputChange={(_, newInputValue) => {
-                                // Support manual input directly
-                                if (!selectedEmployee || selectedEmployee.empCode !== newInputValue) {
-                                    const matched = employeeOptions.find(opt => opt.empCode === newInputValue);
-                                    if (matched) {
-                                        setSelectedEmployee(matched);
-                                    } else {
-                                        setSelectedEmployee({ empCode: newInputValue, label: newInputValue, empName: '' });
-                                    }
-                                }
+                                setSelectedEmployee(newValue);
                             }}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
-                                    label="Employee (Dropdown Autocomplete)"
+                                    label="Employee"
                                     placeholder="Search code or select..."
                                     required
                                     InputProps={{
