@@ -12,6 +12,9 @@ import Password from '../Components/Password';
 import MonthlyReport from '../Components/MonthlyReport';
 import EmployeeRawPunch from '../Components/EmployeeRawPunch';
 import EmployeeContractorCategory from '../Components/EmployeeContractorCategory';
+import ContractorWiseMealSummary from '../Components/ContractorWiseMealSummary';
+import ContractorDeptWiseSummary from '../Components/ContractorDeptWiseSummary';
+import SummarySprlHead from '../Components/SummarySprlHead';
 
 function LogoutAction() {
     sessionStorage.removeItem('isLoggedIn');
@@ -68,6 +71,9 @@ function App() {
                         <Route path="MonthlyMealSummary" element={<MonthlyReport />} />
                         <Route path="EmployeeRawPunch" element={<EmployeeRawPunch />} />
                         <Route path="EmployeeContractorCategory" element={<EmployeeContractorCategory />} />
+                        <Route path="ContractorWiseMeal" element={<ContractorWiseMealSummary />} />
+                        <Route path="ContractorDeptWise" element={<ContractorDeptWiseSummary />} />
+                        <Route path="SummarySprlHead" element={<SummarySprlHead />} />
                     </Route>
                 </Route>
 
