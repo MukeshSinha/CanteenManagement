@@ -83,7 +83,6 @@ const NavbarComponent: React.FC = () => {
 
                     <Navbar.Collapse>
                         <Nav className="me-auto">
-
                             {/* MASTERS */}
                             <NavDropdown
                                 title="Masters"
@@ -163,7 +162,6 @@ const NavbarComponent: React.FC = () => {
                                 </NavDropdown>
 
                             </NavDropdown>
-
                         </Nav>
                     </Navbar.Collapse>
 

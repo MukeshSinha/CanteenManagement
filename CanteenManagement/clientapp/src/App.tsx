@@ -16,6 +16,7 @@ import EmployeeContractorCategory from '../Components/EmployeeContractorCategory
 function LogoutAction() {
     sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('loginUser');
+    sessionStorage.removeItem('role');
     return <Navigate to="/login" replace />;
 }
 

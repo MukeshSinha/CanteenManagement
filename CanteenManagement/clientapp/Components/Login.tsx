@@ -28,7 +28,7 @@ const Login: React.FC = () => {
 
         const trimmedUser = username.trim();
 
-        if (trimmedUser === "user_cantine") {
+        if (trimmedUser === "admin_cantine" || trimmedUser === "user_cantine") {
             // Store username temporarily in sessionStorage
             sessionStorage.setItem("loginUser", trimmedUser);
             navigate("/password");
