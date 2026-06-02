@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import {
     Box,
     Card,
@@ -290,16 +290,35 @@ const UploadMeal = () => {
     };
 
     return (
-        <Card sx={{ maxWidth: 1400, mx: 'auto', mt: 5, boxShadow: 4, borderRadius: 3 }}>
-            <CardContent sx={{ p: 4 }}>
-                <Typography
-                    variant="h4"
-                    align="center"
-                    gutterBottom
-                    sx={{ fontWeight: 600, color: 'primary.main' }}
+        <Box sx={{ p: 3, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
+            <Box 
+                sx={{
+                    background: 'linear-gradient(90deg, #1e3c72 0%, #2a5298 100%)',
+                    color: 'white',
+                    p: 3,
+                    borderRadius: 3,
+                    mb: 4,
+                    boxShadow: '0 4px 20px rgba(30, 60, 114, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                <Typography 
+                    variant="h4" 
+                    fontWeight={400} 
+                    sx={{ 
+                        letterSpacing: '-0.5px',
+                        m: 0,
+                        textAlign: 'center'
+                    }}
                 >
                     Upload Meal Data
                 </Typography>
+            </Box>
+
+            <Card sx={{ maxWidth: 1400, mx: 'auto', boxShadow: 4, borderRadius: 3 }}>
+                <CardContent sx={{ p: 4 }}>
 
                 {/* Form - hamesha dikhega (upload screen aur preview dono mein) */}
                 <Box sx={{ mb: 5 }}>
@@ -597,6 +616,7 @@ const UploadMeal = () => {
                 )}
             </CardContent>
         </Card>
+        </Box>
     );
 };
 

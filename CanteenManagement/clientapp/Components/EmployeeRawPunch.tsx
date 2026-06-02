@@ -249,9 +249,31 @@ const EmployeeRawPunch: React.FC = () => {
 
     return (
         <Box sx={{ p: 3, bgcolor: '#f5f7fa', minHeight: '100vh' }}>
-            <Typography variant="h4" fontWeight={600} gutterBottom sx={{ color: '#1976d2', mb: 3 }}>
-                Employee Raw Punch Report
-            </Typography>
+            <Box 
+                sx={{
+                    background: 'linear-gradient(90deg, #1e3c72 0%, #2a5298 100%)',
+                    color: 'white',
+                    p: 3,
+                    borderRadius: 3,
+                    mb: 4,
+                    boxShadow: '0 4px 20px rgba(30, 60, 114, 0.15)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                <Typography 
+                    variant="h4" 
+                    fontWeight={400} 
+                    sx={{ 
+                        letterSpacing: '-0.5px',
+                        m: 0,
+                        textAlign: 'center'
+                    }}
+                >
+                    Employee Raw Punch Report
+                </Typography>
+            </Box>
 
             <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
                 <CardContent sx={{ p: 3 }}>
