@@ -30,23 +30,14 @@ const Login: React.FC = () => {
         const trimmedUser = username.trim();
         if (!trimmedUser) return;
 
-        try {
-            const res = await apiFetch("Login/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userName: trimmedUser })
-            });
-
-            const data = typeof res === "string" ? JSON.parse(res) : res;
-
-            if (data?.statusCode === 1) {
-                // Store username temporarily in sessionStorage
-                sessionStorage.setItem("loginUser", trimmedUser);
-                navigate("/password");
-            } else {
-                // Trigger card shake animation
-                setShakeCard(true);
-                setTimeout(() => setShakeCard(false), 500);
+        if (trimmedUser === "admin_cantine" || trimmedUser === "user_cantine") {
+            // Store username temporarily in sessionStorage
+            sessionStorage.setItem("loginUser", trimmedUser);
+            navigate("/password");
+        } else {
+            // Trigger card shake animation
+            setShakeCard(true);
+            setTimeout(() => setShakeCard(false), 500);
 
                 // Display beautiful SweetAlert2 Toast error
                 Toast.fire({

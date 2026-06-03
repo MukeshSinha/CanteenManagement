@@ -18,6 +18,7 @@ import {
 
 import { BarChart } from '@mui/x-charts/BarChart';
 import { LineChart } from '@mui/x-charts/LineChart';
+import UserDashboard from './UserDashboard';
 
 
 const weeklyTrendData = {
@@ -43,6 +44,12 @@ const monthlySummary = [
 ];
 
 function CanteenDashboard() {
+    const role = sessionStorage.getItem('role');
+
+    if (role !== '1') {
+        return <UserDashboard />;
+    }
+
     interface DashboardData {
         todayPunch: number;
         employeeStats: Record<string, number> | null;
@@ -140,15 +147,15 @@ function CanteenDashboard() {
     };
 
     const handleToaClick = () => {
-        fetchRawPunch({ category: 'Toa' }, 'TOA Details');
+        fetchRawPunch({ category: 'Toa', fordate: getTodayDate() }, 'TOA Details');
     };
 
     const handleNapsClick = () => {
-        fetchRawPunch({ category: 'Naps' }, 'NAPS Details');
+        fetchRawPunch({ category: 'Naps', fordate: getTodayDate() }, 'NAPS Details');
     };
 
     const handleFotClick = () => {
-        fetchRawPunch({ category: 'Fot' }, 'FOT Details');
+        fetchRawPunch({ category: 'Fot', fordate: getTodayDate() }, 'FOT Details');
     };
 
     const closeModal = () => {

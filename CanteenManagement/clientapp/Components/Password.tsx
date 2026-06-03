@@ -37,14 +37,30 @@ const Password: React.FC = () => {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (password === "cantine@123") {
+        const trimmedPassword = password.trim();
+
+        if (username === "admin_cantine" && trimmedPassword === "admin@123") {
             // Store login session
             sessionStorage.setItem("isLoggedIn", "true");
+            sessionStorage.setItem("role", "1");
             
             // Success Toast
             Toast.fire({
                 icon: "success",
-                title: "Welcome! Logged in successfully"
+                title: "Welcome Admin! Logged in successfully"
+            });
+
+            // Redirect to dashboard (root path)
+            navigate("/", { replace: true });
+        } else if (username === "user_cantine" && trimmedPassword === "user@123") {
+            // Store login session
+            sessionStorage.setItem("isLoggedIn", "true");
+            sessionStorage.setItem("role", "2");
+            
+            // Success Toast
+            Toast.fire({
+                icon: "success",
+                title: "Welcome User! Logged in successfully"
             });
 
             // Redirect to dashboard (root path)

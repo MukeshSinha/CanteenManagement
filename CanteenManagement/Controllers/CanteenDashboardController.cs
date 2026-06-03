@@ -1,4 +1,4 @@
-﻿using CanteenManagement.Services;
+using CanteenManagement.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -32,21 +32,33 @@ namespace CanteenManagement.Controllers
             [FromQuery] string? category = null
             )
         {
-            string url = ApiService.Canteen;
-            if( fordate != null)
+            string url = ApiService.Canteen + "CanteenPunch/getEmpRawpunch";
+            var queryParams = new List<string>();
+
+            if (fordate != null)
             {
-                url += $"CanteenPunch/getEmpRawpunch?fordate={fordate}";
+                queryParams.Add($"fordate={fordate}");
             }
-            else if(category != null)
+            if (category != null)
             {
-                url += $"CanteenPunch/getEmpRawpunch?category={category}";
+                queryParams.Add($"category={category}");
             }
-            else
+
+            if (queryParams.Count > 0)
             {
-                url += $"CanteenPunch/getEmpRawpunch";
+                url += "?" + string.Join("&", queryParams);
             }
 
             //string url = ApiService.Canteen + $"CanteenPunch/EmployeeRawPunch?fordate={fordate}&category={category}";
+            var mHeader = _headers.GetHeaders();
+            var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+            return Content(response, "application/json");
+        }
+
+        [HttpGet("get-user-dashboard")]
+        public async Task<IActionResult> getUserDashboard()
+        {
+            string url = ApiService.Canteen + $"CanteenPunch/CanteenDashboard";
             var mHeader = _headers.GetHeaders();
             var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
             return Content(response, "application/json");
