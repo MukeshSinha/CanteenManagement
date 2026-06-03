@@ -37,41 +37,22 @@ const Password: React.FC = () => {
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!password.trim()) return;
-
-        try {
-            const res = await apiFetch("Login/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userName: username, password: password })
+        if (password === "cantine@123") {
+            // Store login session
+            sessionStorage.setItem("isLoggedIn", "true");
+            
+            // Success Toast
+            Toast.fire({
+                icon: "success",
+                title: "Welcome! Logged in successfully"
             });
 
-            const data = typeof res === "string" ? JSON.parse(res) : res;
-
-            if (data?.statusCode === 1) {
-                // Store login session
-                sessionStorage.setItem("isLoggedIn", "true");
-                
-                // Hardcode role value in TSX page based on username
-                if (username === "admin") {
-                    sessionStorage.setItem("userRole", "1");
-                    Toast.fire({
-                        icon: "success",
-                        title: "Welcome Admin! Logged in successfully"
-                    });
-                    navigate("/admin-dashboard", { replace: true });
-                } else {
-                    sessionStorage.setItem("userRole", "2");
-                    Toast.fire({
-                        icon: "success",
-                        title: "Welcome! Logged in successfully"
-                    });
-                    navigate("/user-dashboard", { replace: true });
-                }
-            } else {
-                // Trigger card shake animation
-                setShakeCard(true);
-                setTimeout(() => setShakeCard(false), 500);
+            // Redirect to dashboard (root path)
+            navigate("/", { replace: true });
+        } else {
+            // Trigger card shake animation
+            setShakeCard(true);
+            setTimeout(() => setShakeCard(false), 500);
 
                 // Display beautiful SweetAlert2 Toast error
                 Toast.fire({
