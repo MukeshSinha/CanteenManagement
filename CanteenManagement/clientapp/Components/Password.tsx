@@ -39,38 +39,49 @@ const Password: React.FC = () => {
 
         const trimmedPassword = password.trim();
 
-        if (username === "admin_cantine" && trimmedPassword === "admin@123") {
-            // Store login session
-            sessionStorage.setItem("isLoggedIn", "true");
-            sessionStorage.setItem("role", "1");
-            
-            // Success Toast
-            Toast.fire({
-                icon: "success",
-                title: "Welcome Admin! Logged in successfully"
+        try {
+            const res = await apiFetch("Login/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userName: username, password: trimmedPassword })
             });
 
-            // Redirect to dashboard (root path)
-            navigate("/", { replace: true });
-        } else if (username === "user_cantine" && trimmedPassword === "user@123") {
-            // Store login session
-            sessionStorage.setItem("isLoggedIn", "true");
-            sessionStorage.setItem("role", "2");
-            
-            // Success Toast
-            Toast.fire({
-                icon: "success",
-                title: "Welcome User! Logged in successfully"
-            });
+            const data = typeof res === "string" ? JSON.parse(res) : res;
 
-            // Redirect to dashboard (root path)
-            navigate("/", { replace: true });
-        } else {
-            // Trigger card shake animation
-            setShakeCard(true);
-            setTimeout(() => setShakeCard(false), 500);
+            if (data?.statusCode === 1) {
+                // Store login session
+                sessionStorage.setItem("isLoggedIn", "true");
+                
+                // Hardcode role value in TSX page based on username
+                if (username === "admin" && trimmedPassword === "admin#123") {
+                    sessionStorage.setItem("role", "1");
+                    sessionStorage.setItem("userRole", "1");
+                    Toast.fire({
+                        icon: "success",
+                        title: "Welcome Admin! Logged in successfully"
+                    });
+                    navigate("/admin-dashboard", { replace: true });
+                } else if (username === "canteen" && trimmedPassword === "canteen@123") {
+                    sessionStorage.setItem("role", "2");
+                    sessionStorage.setItem("userRole", "2");
+                    Toast.fire({
+                        icon: "success",
+                        title: "Welcome Canteen User! Logged in successfully"
+                    });
+                    navigate("/user-dashboard", { replace: true });
+                } else {
+                    sessionStorage.setItem("role", "2");
+                    sessionStorage.setItem("userRole", "2");
+                    Toast.fire({
+                        icon: "success",
+                        title: "Welcome! Logged in successfully"
+                    });
+                    navigate("/user-dashboard", { replace: true });
+                }
+            } else {
+                setShakeCard(true);
+                setTimeout(() => setShakeCard(false), 500);
 
-                // Display beautiful SweetAlert2 Toast error
                 Toast.fire({
                     icon: "error",
                     title: data?.message || "Please check your Password"

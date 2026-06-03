@@ -15,6 +15,7 @@ import EmployeeContractorCategory from '../Components/EmployeeContractorCategory
 import ContractorWiseMealSummary from '../Components/ContractorWiseMealSummary';
 import ContractorDeptWiseSummary from '../Components/ContractorDeptWiseSummary';
 import SummarySprlHead from '../Components/SummarySprlHead';
+import UserDashboard from '../Components/UserDashboard';
 
 function LogoutAction() {
     sessionStorage.removeItem('isLoggedIn');
