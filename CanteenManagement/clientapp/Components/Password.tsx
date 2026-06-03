@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "./Login.css";
+import { apiFetch } from "../src/utils/api";
 
 const Password: React.FC = () => {
     const [password, setPassword] = useState("");
@@ -13,7 +14,7 @@ const Password: React.FC = () => {
 
     // Redirect to login if user didn't enter the username first
     useEffect(() => {
-        if (username !== "user_cantine") {
+        if (!username) {
             navigate("/login", { replace: true });
         }
     }, [username, navigate]);
@@ -33,30 +34,58 @@ const Password: React.FC = () => {
         }
     });
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (password === "cantine@123") {
-            // Store login session
-            sessionStorage.setItem("isLoggedIn", "true");
-            
-            // Success Toast
-            Toast.fire({
-                icon: "success",
-                title: "Welcome! Logged in successfully"
+        if (!password.trim()) return;
+
+        try {
+            const res = await apiFetch("Login/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userName: username, password: password })
             });
 
-            // Redirect to dashboard (root path)
-            navigate("/", { replace: true });
-        } else {
-            // Trigger card shake animation
+            const data = typeof res === "string" ? JSON.parse(res) : res;
+
+            if (data?.statusCode === 1) {
+                // Store login session
+                sessionStorage.setItem("isLoggedIn", "true");
+                
+                // Hardcode role value in TSX page based on username
+                if (username === "admin") {
+                    sessionStorage.setItem("userRole", "1");
+                    Toast.fire({
+                        icon: "success",
+                        title: "Welcome Admin! Logged in successfully"
+                    });
+                    navigate("/admin-dashboard", { replace: true });
+                } else {
+                    sessionStorage.setItem("userRole", "2");
+                    Toast.fire({
+                        icon: "success",
+                        title: "Welcome! Logged in successfully"
+                    });
+                    navigate("/user-dashboard", { replace: true });
+                }
+            } else {
+                // Trigger card shake animation
+                setShakeCard(true);
+                setTimeout(() => setShakeCard(false), 500);
+
+                // Display beautiful SweetAlert2 Toast error
+                Toast.fire({
+                    icon: "error",
+                    title: data?.message || "Please check your Password"
+                });
+            }
+        } catch (err) {
+            console.error(err);
             setShakeCard(true);
             setTimeout(() => setShakeCard(false), 500);
-
-            // Display beautiful SweetAlert2 Toast error
             Toast.fire({
                 icon: "error",
-                title: "Please check your Password"
+                title: "Failed to connect to server"
             });
         }
     };

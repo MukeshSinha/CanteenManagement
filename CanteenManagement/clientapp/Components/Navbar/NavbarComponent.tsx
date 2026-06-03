@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import "./Navbar.css";
 
 const NavbarComponent: React.FC = () => {
+    const userRole = sessionStorage.getItem("userRole");
 
     const [showMasters, setShowMasters] = useState(false);
     const [showReports, setShowReports] = useState(false);
@@ -85,20 +86,22 @@ const NavbarComponent: React.FC = () => {
                         <Nav className="me-auto">
 
                             {/* MASTERS */}
-                            <NavDropdown
-                                title="Masters"
-                                show={showMasters}
-                                onMouseEnter={() => setShowMasters(true)}
-                                onMouseLeave={() => setShowMasters(false)}
-                                menuVariant="dark"
-                            >
-                                <NavDropdown.Item as={Link} to="/masters/employee-configuration">
-                                    Employee Configuration
-                                </NavDropdown.Item>
-                                <NavDropdown.Item as={Link} to="/masters/Item-Master">
-                                    Item Master
-                                </NavDropdown.Item>
-                            </NavDropdown>
+                            {userRole === "1" && (
+                                <NavDropdown
+                                    title="Masters"
+                                    show={showMasters}
+                                    onMouseEnter={() => setShowMasters(true)}
+                                    onMouseLeave={() => setShowMasters(false)}
+                                    menuVariant="dark"
+                                >
+                                    <NavDropdown.Item as={Link} to="/masters/employee-configuration">
+                                        Employee Configuration
+                                    </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/masters/Item-Master">
+                                        Item Master
+                                    </NavDropdown.Item>
+                                </NavDropdown>
+                            )}
 
 
                             {/* REPORTS */}
@@ -128,9 +131,11 @@ const NavbarComponent: React.FC = () => {
                                     <NavDropdown.Item as={Link} to="/reports/daily-meal/contractor-category">
                                         Contractor Category
                                     </NavDropdown.Item>
-                                    <NavDropdown.Item as={Link} to="/reports/daily-meal/Upload-Meal">
-                                        Upload Meal
-                                    </NavDropdown.Item>
+                                    {userRole === "1" && (
+                                        <NavDropdown.Item as={Link} to="/reports/daily-meal/Upload-Meal">
+                                            Upload Meal
+                                        </NavDropdown.Item>
+                                    )}
                                 </NavDropdown>
 
 

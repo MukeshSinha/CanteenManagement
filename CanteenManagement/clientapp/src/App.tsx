@@ -12,10 +12,12 @@ import Password from '../Components/Password';
 import MonthlyReport from '../Components/MonthlyReport';
 import EmployeeRawPunch from '../Components/EmployeeRawPunch';
 import EmployeeContractorCategory from '../Components/EmployeeContractorCategory';
+import UserDashboard from '../Components/UserDashboard';
 
 function LogoutAction() {
     sessionStorage.removeItem('isLoggedIn');
     sessionStorage.removeItem('loginUser');
+    sessionStorage.removeItem('userRole');
     return <Navigate to="/login" replace />;
 }
 
@@ -29,6 +31,7 @@ function App() {
     }, [location]);
 
     const isAuthPage = location.pathname === '/login' || location.pathname === '/password';
+    const userRole = sessionStorage.getItem('userRole');
 
     // If not logged in and not on an auth page, redirect to /login
     if (!isLoggedIn && !isAuthPage) {
@@ -52,7 +55,11 @@ function App() {
                 <Route path="/logout" element={<LogoutAction />} />
 
                 {/* Protected Dashboard and Configuration Routes */}
-                <Route path="/" element={<CanteenDashboard />} />
+                <Route path="/" element={
+                    userRole === '1' ? <Navigate to="/admin-dashboard" replace /> : <Navigate to="/user-dashboard" replace />
+                } />
+                <Route path="/admin-dashboard" element={<CanteenDashboard />} />
+                <Route path="/user-dashboard" element={<UserDashboard />} />
                 <Route path="/masters/Item-Master" element={<ItemMaster />} />
 
                 <Route path="reports">

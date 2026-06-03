@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import "./Login.css";
+import { apiFetch } from "../src/utils/api";
 
 const Login: React.FC = () => {
     const [username, setUsername] = useState("");
@@ -23,24 +24,43 @@ const Login: React.FC = () => {
         }
     });
 
-    const handleContinue = (e: React.FormEvent) => {
+    const handleContinue = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const trimmedUser = username.trim();
+        if (!trimmedUser) return;
 
-        if (trimmedUser === "user_cantine") {
-            // Store username temporarily in sessionStorage
-            sessionStorage.setItem("loginUser", trimmedUser);
-            navigate("/password");
-        } else {
-            // Trigger card shake animation
+        try {
+            const res = await apiFetch("Login/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userName: trimmedUser })
+            });
+
+            const data = typeof res === "string" ? JSON.parse(res) : res;
+
+            if (data?.statusCode === 1) {
+                // Store username temporarily in sessionStorage
+                sessionStorage.setItem("loginUser", trimmedUser);
+                navigate("/password");
+            } else {
+                // Trigger card shake animation
+                setShakeCard(true);
+                setTimeout(() => setShakeCard(false), 500);
+
+                // Display beautiful SweetAlert2 Toast error
+                Toast.fire({
+                    icon: "error",
+                    title: data?.message || "Please check user login"
+                });
+            }
+        } catch (err) {
+            console.error(err);
             setShakeCard(true);
             setTimeout(() => setShakeCard(false), 500);
-
-            // Display beautiful SweetAlert2 Toast error
             Toast.fire({
                 icon: "error",
-                title: "Please check user login"
+                title: "Failed to connect to server"
             });
         }
     };
