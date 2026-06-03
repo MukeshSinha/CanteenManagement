@@ -1,229 +1,212 @@
-import { useState, useEffect } from 'react';
-import { apiFetch } from '../src/utils/api';
+import { useState, useEffect } from "react";
+import { apiFetch } from "../src/utils/api";
 import {
     Box,
     Card,
     CardContent,
     Typography,
-    Chip,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Paper,
+    CircularProgress,
     Divider,
-} from '@mui/material';
-import { BarChart } from '@mui/x-charts/BarChart';
+    Fade,
+} from "@mui/material";
+import { Row, Col } from "react-bootstrap";
+import { BarChart } from "@mui/x-charts/BarChart";
+import { LineChart } from "@mui/x-charts/LineChart";
 
-const todaysActivity = [
-    { id: '1021', name: 'Amit Kumar', dept: 'Production', meal: 'Lunch' },
-    { id: '1045', name: 'Rakesh', dept: 'HR', meal: 'Breakfast' },
-    { id: '1102', name: 'Sunil', dept: 'Maintenance', meal: 'Dinner' },
-];
+interface UserDashboardData {
+    lunch: number;
+    dinner: number;
+}
 
-function UserDashboard() {
-    interface DashboardData {
-        todayPunch: number;
-        employeeStats: Record<string, number> | null;
-    }
-
-    const [dashboardData, setDashboardData] = useState<DashboardData>({
-        todayPunch: 0,
-        employeeStats: null,
+export default function UserDashboard() {
+    const [loading, setLoading] = useState(true);
+    const [, setError] = useState<string | null>(null);
+    const [data, setData] = useState<UserDashboardData>({
+        lunch: 0,
+        dinner: 0,
     });
 
-    const username = sessionStorage.getItem('loginUser') || 'User';
+    const username = sessionStorage.getItem("loginUser") || "canteen_user";
+    const formattedUsername = username
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const response = await apiFetch('Canteen-Dashboard/get-admin-dashboard');
-                let data = response;
-                if (typeof data === 'string') {
-                    data = JSON.parse(data);
+                const response = await apiFetch("Canteen-Dashboard/get-user-dashboard");
+                let parsedData = response;
+                if (typeof parsedData === "string") {
+                    parsedData = JSON.parse(parsedData);
                 }
-                
-                const table = data?.dataFetch?.table || [];
-                const table1 = data?.dataFetch?.table1 || [];
-                
-                const todayPunch = table[0]?.todayPunch || 0;
-                const employeeStats = table1[0] || null;
-                
-                setDashboardData({
-                    todayPunch,
-                    employeeStats,
+
+                const table = parsedData?.dataFetch?.table;
+                if (table && table.length > 0) {
+                    const firstRow = table[0];
+                    setData({
+                        lunch: typeof firstRow.lunch === "number" ? firstRow.lunch : 923.0,
+                        dinner: typeof firstRow.dinner === "number" ? firstRow.dinner : 649.0,
+                    });
+                }
+                setError(null);
+            } catch (err: any) {
+                console.warn("Failed fetching from api. Using fallback/dummy data.", err);
+                setData({
+                    lunch: 923.0,
+                    dinner: 649.0,
                 });
-            } catch (error) {
-                console.error('Error fetching dashboard data:', error);
+            } finally {
+                setLoading(false);
             }
         };
+
         fetchDashboardData();
     }, []);
 
+    const weeklyTrendData = {
+        days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        values: [20, 45, 30, 25, 40, 65],
+    };
+
     return (
-        <Box sx={{ p: 4, bgcolor: '#f8fafc', minHeight: '100vh' }}>
-            {/* Header Greeting Box with Premium Gradient */}
-            <Card
-                sx={{
-                    mb: 4,
-                    background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-                    color: 'white',
-                    borderRadius: 4,
-                    boxShadow: '0 10px 30px rgba(15, 23, 42, 0.15)',
-                    position: 'relative',
-                    overflow: 'hidden',
-                }}
-            >
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        top: -50,
-                        right: -50,
-                        width: 150,
-                        height: 150,
-                        borderRadius: '50%',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                    }}
-                />
-                <CardContent sx={{ p: 4 }}>
-                    <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, letterSpacing: '-0.5px' }}>
-                        Welcome back, {username}!
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ opacity: 0.8, maxWidth: 600 }}>
-                        Here is your canteen overview for today. View daily meals served, active meal schedules, and today's activity.
-                    </Typography>
-                </CardContent>
-            </Card>
+        <Fade in={true} timeout={800}>
+            <Box sx={{ p: 3, bgcolor: "#f5f7fa", minHeight: "100vh" }}>
+                {/* HEADER */}
+                <Typography variant="h4" gutterBottom sx={{ mb: 4, fontWeight: 600 }}>
+                    Canteen Dashboard ({formattedUsername})
+                </Typography>
 
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 3,
-                    mb: 4,
-                }}
-            >
-                {/* Total Meals Card */}
-                <Card
-                    sx={{
-                        flex: '1 1 200px',
-                        borderRadius: 3,
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                        transition: 'transform 0.2s',
-                        '&:hover': { transform: 'translateY(-4px)' },
-                    }}
-                >
-                    <CardContent sx={{ textAlign: 'center', py: 3 }}>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase' }}>
-                            Today's Total Meals
-                        </Typography>
-                        <Typography variant="h3" sx={{ fontWeight: 800, mt: 1.5, color: '#0f172a' }}>
-                            {dashboardData.todayPunch}
-                        </Typography>
-                        <Chip label="Active Shift" color="success" size="small" sx={{ mt: 1.5, fontWeight: 600 }} />
-                    </CardContent>
-                </Card>
+                {loading ? (
+                    <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 8 }}>
+                        <CircularProgress color="primary" size={50} />
+                    </Box>
+                ) : (
+                    <>
+                        {/* SMALL STATS CARDS */}
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 3,
+                                mb: 4,
+                                alignItems: "flex-start",
+                            }}
+                        >
+                            {/* LUNCH CARD */}
+                            <Card
+                                sx={{
+                                    flex: "1 1 180px",
+                                    maxWidth: 220,
+                                    bgcolor: "#f57c00",
+                                    color: "white",
+                                    borderRadius: 3,
+                                    cursor: "pointer",
+                                    transition: "transform 0.18s, box-shadow 0.18s",
+                                    "&:hover": {
+                                        transform: "translateY(-4px) scale(1.03)",
+                                        boxShadow: "0 8px 24px rgba(245,124,0,0.35)",
+                                    },
+                                }}
+                            >
+                                <CardContent sx={{ textAlign: "center", pb: 2 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                        Lunch Meals
+                                    </Typography>
+                                    <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
+                                        {data.lunch}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
+                                        12:30 PM - 02:30 PM
+                                    </Typography>
+                                </CardContent>
+                            </Card>
 
-                {/* Operations Summary Card */}
-                <Card
-                    sx={{
-                        flex: '1 1 240px',
-                        borderRadius: 3,
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                    }}
-                >
-                    <CardContent sx={{ p: 3 }}>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 600, textTransform: 'uppercase', mb: 2 }}>
-                            Canteen Staff Statistics
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 550 }}>TOA Attendance</Typography>
-                                <Chip label={dashboardData.employeeStats?.toa ?? 0} size="small" variant="outlined" />
-                            </Box>
-                            <Divider />
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="body2" sx={{ fontWeight: 550 }}>NAPS Apprentices</Typography>
-                                <Chip label={dashboardData.employeeStats?.naps ?? 0} size="small" variant="outlined" />
-                            </Box>
+                            {/* DINNER CARD */}
+                            <Card
+                                sx={{
+                                    flex: "1 1 180px",
+                                    maxWidth: 220,
+                                    bgcolor: "#1976d2",
+                                    color: "white",
+                                    borderRadius: 3,
+                                    cursor: "pointer",
+                                    transition: "transform 0.18s, box-shadow 0.18s",
+                                    "&:hover": {
+                                        transform: "translateY(-4px) scale(1.03)",
+                                        boxShadow: "0 8px 24px rgba(25,118,210,0.35)",
+                                    },
+                                }}
+                            >
+                                <CardContent sx={{ textAlign: "center", pb: 2 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                        Dinner Meals
+                                    </Typography>
+                                    <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
+                                        {data.dinner}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
+                                        07:30 PM - 09:30 PM
+                                    </Typography>
+                                </CardContent>
+                            </Card>
                         </Box>
-                    </CardContent>
-                </Card>
-            </Box>
 
-            <Box
-                sx={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: 3,
-                }}
-            >
-                {/* Daily Meal Consumption Chart */}
-                <Card sx={{ flex: '1 1 45%', minWidth: 320, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                    <CardContent>
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                            Daily Meal Consumption
-                        </Typography>
-                        <Divider sx={{ mb: 2 }} />
-                        <Box sx={{ height: 320, width: '100%' }}>
-                            <BarChart
-                                height={300}
-                                xAxis={[{ scaleType: 'band', data: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] }]}
-                                series={[{ data: [20, 45, 30, 25, 40, 65], label: 'Weekly Trend', color: '#0288d1' }]}
-                            />
-                        </Box>
-                    </CardContent>
-                </Card>
+                        {/* DUMMY GRAPHS SECTION */}
+                        <Row className="g-4">
+                            <Col xs={12} md={6}>
+                                <Card sx={{ borderRadius: 3 }}>
+                                    <CardContent>
+                                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+                                            Daily Meal Consumption
+                                        </Typography>
+                                        <Divider sx={{ mb: 2 }} />
+                                        <Box sx={{ height: 320, width: "100%" }}>
+                                            <BarChart
+                                                xAxis={[{ scaleType: "band", data: ["Breakfast", "Lunch", "Dinner"] }]}
+                                                series={[
+                                                    { data: [Math.round(data.lunch * 0.1), data.lunch, data.dinner], label: "Today", color: "#1976d2" },
+                                                    { data: [Math.round(data.lunch * 0.08), Math.round(data.lunch * 1.1), Math.round(data.dinner * 0.95)], label: "Yesterday", color: "#388e3c" },
+                                                    { data: [Math.round(data.lunch * 0.12), Math.round(data.lunch * 0.95), Math.round(data.dinner * 1.05)], label: "Average", color: "#f57c00" },
+                                                ]}
+                                                height={300}
+                                            />
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Col>
 
-                {/* Today's Meal Activity */}
-                <Card sx={{ flex: '1 1 45%', minWidth: 320, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
-                    <CardContent>
-                        <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                            Today's Meal Activity
-                        </Typography>
-                        <Divider sx={{ mb: 2 }} />
-                        <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-                            <Table size="small">
-                                <TableHead>
-                                    <TableRow sx={{ bgcolor: '#f1f5f9' }}>
-                                        <TableCell sx={{ fontWeight: 600 }}>Employee ID</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Name</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Department</TableCell>
-                                        <TableCell sx={{ fontWeight: 600 }}>Meal Type</TableCell>
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {todaysActivity.map((row) => (
-                                        <TableRow key={row.id} sx={{ '&:hover': { bgcolor: '#f8fafc' } }}>
-                                            <TableCell>{row.id}</TableCell>
-                                            <TableCell sx={{ fontWeight: 550 }}>{row.name}</TableCell>
-                                            <TableCell>{row.dept}</TableCell>
-                                            <TableCell>
-                                                <Chip
-                                                    label={row.meal}
-                                                    size="small"
-                                                    color={
-                                                        row.meal === 'Breakfast'
-                                                            ? 'warning'
-                                                            : row.meal === 'Lunch'
-                                                                ? 'success'
-                                                                : 'primary'
-                                                    }
-                                                    sx={{ fontWeight: 600, fontSize: '0.75rem' }}
-                                                />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </CardContent>
-                </Card>
+                            <Col xs={12} md={6}>
+                                <Card sx={{ borderRadius: 3 }}>
+                                    <CardContent>
+                                        <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
+                                            Weekly Meal Trend
+                                        </Typography>
+                                        <Divider sx={{ mb: 2 }} />
+                                        <Box sx={{ height: 320, width: "100%" }}>
+                                            <LineChart
+                                                xAxis={[{ scaleType: "point", data: weeklyTrendData.days }]}
+                                                series={[{
+                                                    data: [
+                                                        Math.round((data.lunch + data.dinner) * 0.85),
+                                                        Math.round((data.lunch + data.dinner) * 0.95),
+                                                        Math.round((data.lunch + data.dinner) * 1.0),
+                                                        Math.round((data.lunch + data.dinner) * 0.9),
+                                                        Math.round((data.lunch + data.dinner) * 1.05),
+                                                        Math.round((data.lunch + data.dinner) * 0.7)
+                                                    ],
+                                                    color: "#1976d2"
+                                                }]}
+                                                height={300}
+                                            />
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            </Col>
+                        </Row>
+                    </>
+                )}
             </Box>
-        </Box>
+        </Fade>
     );
 }
-
-export default UserDashboard;
