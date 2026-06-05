@@ -58,9 +58,9 @@ function App() {
 
                 {/* Protected Dashboard and Configuration Routes */}
                 <Route path="/" element={
-                    userRole === '1' ? <Navigate to="/admin-dashboard" replace /> : <Navigate to="/user-dashboard" replace />
+                    userRole === '1' ? <Navigate to="/canteen-dashboard" replace /> : <Navigate to="/user-dashboard" replace />
                 } />
-                <Route path="/admin-dashboard" element={<CanteenDashboard />} />
+                <Route path="/canteen-dashboard" element={<CanteenDashboard />} />
                 <Route path="/user-dashboard" element={<UserDashboard />} />
                 <Route path="/masters/Item-Master" element={<ItemMaster />} />
 

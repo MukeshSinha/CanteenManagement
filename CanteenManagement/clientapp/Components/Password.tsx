@@ -52,26 +52,53 @@ const Password: React.FC = () => {
                 // Store login session
                 sessionStorage.setItem("isLoggedIn", "true");
                 
-                // Hardcode role value in TSX page based on username
-                if (username === "admin" && trimmedPassword === "admin#123") {
-                    sessionStorage.setItem("role", "1");
-                    sessionStorage.setItem("userRole", "1");
+                // Debug logging to inspect response structure
+                console.log("Login API Response:", data);
+
+                // Fetch roleId from the api response case-insensitively
+                const dataFetchKey = data ? Object.keys(data).find(k => k.toLowerCase() === "datafetch") : null;
+                const dataFetchObj = dataFetchKey ? data[dataFetchKey] : null;
+
+                const tableKey = dataFetchObj ? Object.keys(dataFetchObj).find(k => k.toLowerCase() === "table") : null;
+                const userTable = tableKey ? dataFetchObj[tableKey] : null;
+
+                let roleId: any = null;
+                if (Array.isArray(userTable) && userTable.length > 0) {
+                    const firstRow = userTable[0];
+                    const roleKey = Object.keys(firstRow).find(k => k.toLowerCase() === "roleid");
+                    if (roleKey) {
+                        roleId = firstRow[roleKey];
+                    }
+                }
+
+                // Fallback to tempRole from first API call if not present in second API response
+                if (roleId === undefined || roleId === null) {
+                    roleId = sessionStorage.getItem("tempRole");
+                }
+
+                console.log("Extracted roleId:", roleId);
+
+                const roleStr = roleId !== undefined && roleId !== null ? roleId.toString() : "2";
+                
+                sessionStorage.setItem("role", roleStr);
+                sessionStorage.setItem("userRole", roleStr);
+
+                // Clean up the temporary session item
+                sessionStorage.removeItem("tempRole");
+
+                if (roleStr === "1") {
                     Toast.fire({
                         icon: "success",
                         title: "Welcome Admin! Logged in successfully"
                     });
-                    navigate("/admin-dashboard", { replace: true });
-                } else if (username === "canteen" && trimmedPassword === "canteen@123") {
-                    sessionStorage.setItem("role", "2");
-                    sessionStorage.setItem("userRole", "2");
+                    navigate("/canteen-dashboard", { replace: true });
+                } else if (roleStr === "2") {
                     Toast.fire({
                         icon: "success",
-                        title: "Welcome Canteen User! Logged in successfully"
+                        title: "Welcome User! Logged in successfully"
                     });
                     navigate("/user-dashboard", { replace: true });
                 } else {
-                    sessionStorage.setItem("role", "2");
-                    sessionStorage.setItem("userRole", "2");
                     Toast.fire({
                         icon: "success",
                         title: "Welcome! Logged in successfully"

@@ -42,6 +42,27 @@ const Login: React.FC = () => {
             if (data?.statusCode === 1) {
                 // Store username temporarily in sessionStorage
                 sessionStorage.setItem("loginUser", trimmedUser);
+
+                // Fetch roleId from the api response case-insensitively
+                const dataFetchKey = data ? Object.keys(data).find(k => k.toLowerCase() === "datafetch") : null;
+                const dataFetchObj = dataFetchKey ? data[dataFetchKey] : null;
+
+                const tableKey = dataFetchObj ? Object.keys(dataFetchObj).find(k => k.toLowerCase() === "table") : null;
+                const userTable = tableKey ? dataFetchObj[tableKey] : null;
+
+                let roleId: any = null;
+                if (Array.isArray(userTable) && userTable.length > 0) {
+                    const firstRow = userTable[0];
+                    const roleKey = Object.keys(firstRow).find(k => k.toLowerCase() === "roleid");
+                    if (roleKey) {
+                        roleId = firstRow[roleKey];
+                    }
+                }
+
+                if (roleId !== undefined && roleId !== null) {
+                    sessionStorage.setItem("tempRole", roleId.toString());
+                }
+
                 navigate("/password");
             } else {
                 // Trigger card shake animation

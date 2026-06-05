@@ -54,22 +54,14 @@ namespace CanteenManagement.Controllers
                         userName = request.UserName,
                         password = request.Password
                     });
+                    string passwordUrl = ApiService.Canteen + "UserManages/verifypassword";
 
-                    string secondResponse = await apiConsume.SendRequestAsync(url, HttpMethod.Post, mHeader, null, passwordPayload);
-                    int secondStatusCode = GetStatusCode(secondResponse);
-
-                    if (secondStatusCode == 1)
-                    {
-                        return Ok(new { statusCode = 1, message = "Login Successfully" });
-                    }
-                    else
-                    {
-                        return Ok(new { statusCode = 2, message = "Failed to Login" });
-                    }
+                    string secondResponse = await apiConsume.SendRequestAsync(passwordUrl, HttpMethod.Post, mHeader, null, passwordPayload);
+                    return Content(secondResponse, "application/json");
                 }
                 else
                 {
-                    return Ok(new { statusCode = 2, message = "Failed to Login" });
+                    return Content(firstResponse, "application/json");
                 }
             }
             catch (Exception ex)
