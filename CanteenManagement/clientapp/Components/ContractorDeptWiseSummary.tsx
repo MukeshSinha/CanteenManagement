@@ -242,6 +242,47 @@ const ContractorDeptWiseSummary: React.FC = () => {
         return String(total);
     };
 
+    // Helper functions for group totals (per contractor)
+    const getGroupTotal = (groupRows: ReportRow[], colKey: string): number | string => {
+        if (['ezone', 'department'].includes(colKey)) {
+            if (colKey === 'ezone') return groupRows[0]?.ezone || '';
+            return 'Subtotal';
+        }
+
+        return groupRows.reduce((sum, row) => {
+            let val = 0;
+            if (colKey === 'totalQty') {
+                val = (Number(row.totalMeal) || 0) + (Number(row.tea) || 0) + (Number(row.fs) || 0) + (Number(row.nb) || 0);
+            } else if (colKey === 'totalAmount') {
+                val = (Number(row.mealAmount) || 0) + (Number(row.tea_Rs) || 0) + (Number(row.fS_RS) || 0) + (Number(row.nB_RS) || 0);
+            } else {
+                val = Number(row[colKey]) || 0;
+            }
+            return sum + val;
+        }, 0);
+    };
+
+    const getFormattedGroupTotal = (groupRows: ReportRow[], colKey: string): string => {
+        const total = getGroupTotal(groupRows, colKey);
+        if (typeof total === 'string') return total;
+        if (['mealAmount', 'tea_Rs', 'fS_RS', 'nB_RS', 'totalAmount'].includes(colKey)) {
+            return total.toFixed(2);
+        }
+        return String(total);
+    };
+
+    // Group filteredRows by ezone
+    const getGroupedRows = (rows: ReportRow[]) => {
+        return rows.reduce((acc, row) => {
+            const key = row.ezone || 'Unknown';
+            if (!acc[key]) {
+                acc[key] = [];
+            }
+            acc[key].push(row);
+            return acc;
+        }, {} as Record<string, ReportRow[]>);
+    };
+
     // Export utilities
     const getExportData = () => {
         const displayColumns = [...reportColumns, 'totalQty', 'totalAmount'];
@@ -249,15 +290,28 @@ const ContractorDeptWiseSummary: React.FC = () => {
         // Headers
         const headers = displayColumns.map(col => columnHeaderMap[col] || col);
 
-        // Data Rows
-        const dataRows = filteredRows.map(row => {
-            const tQty = (Number(row.totalMeal) || 0) + (Number(row.tea) || 0) + (Number(row.fs) || 0) + (Number(row.nb) || 0);
-            const tAmt = (Number(row.mealAmount) || 0) + (Number(row.tea_Rs) || 0) + (Number(row.fS_RS) || 0) + (Number(row.nB_RS) || 0);
+        const grouped = getGroupedRows(filteredRows);
+        const dataRows: any[][] = [];
 
-            return displayColumns.map(col => {
-                if (col === 'totalQty') return tQty;
-                if (col === 'totalAmount') return tAmt;
-                return row[col] !== null && row[col] !== undefined ? row[col] : '';
+        Object.keys(grouped).forEach(ezoneKey => {
+            const groupRows = grouped[ezoneKey];
+
+            // 1. Group Header Row
+            const groupHeaderRow = displayColumns.map(col => getFormattedGroupTotal(groupRows, col));
+            dataRows.push(groupHeaderRow);
+
+            // 2. Detail Rows
+            groupRows.forEach(row => {
+                const tQty = (Number(row.totalMeal) || 0) + (Number(row.tea) || 0) + (Number(row.fs) || 0) + (Number(row.nb) || 0);
+                const tAmt = (Number(row.mealAmount) || 0) + (Number(row.tea_Rs) || 0) + (Number(row.fS_RS) || 0) + (Number(row.nB_RS) || 0);
+
+                const detailRow = displayColumns.map(col => {
+                    if (col === 'totalQty') return tQty;
+                    if (col === 'totalAmount') return tAmt;
+                    if (col === 'ezone') return ''; // blank out contractor name to match hierarchical view
+                    return row[col] !== null && row[col] !== undefined ? row[col] : '';
+                });
+                dataRows.push(detailRow);
             });
         });
 
@@ -543,41 +597,78 @@ const ContractorDeptWiseSummary: React.FC = () => {
                                         </TableRow>
                                     ) : (
                                         <>
-                                            {/* Data Rows */}
-                                            {filteredRows.map((row, index) => {
-                                                const tQty = (Number(row.totalMeal) || 0) + (Number(row.tea) || 0) + (Number(row.fs) || 0) + (Number(row.nb) || 0);
-                                                const tAmt = (Number(row.mealAmount) || 0) + (Number(row.tea_Rs) || 0) + (Number(row.fS_RS) || 0) + (Number(row.nB_RS) || 0);
+                                            {/* Grouped Rows */}
+                                            {(() => {
+                                                const grouped = getGroupedRows(filteredRows);
+                                                return Object.keys(grouped).map((ezoneKey) => {
+                                                    const groupRows = grouped[ezoneKey];
+                                                    return (
+                                                        <React.Fragment key={ezoneKey}>
+                                                            {/* Group Header / Subtotal Row */}
+                                                            <TableRow sx={{ bgcolor: '#e3f2fd', '& td': { fontWeight: 'bold', fontSize: 13, py: 1 } }}>
+                                                                {[...reportColumns, 'totalQty', 'totalAmount'].map((col) => {
+                                                                    const formattedVal = getFormattedGroupTotal(groupRows, col);
+                                                                    return (
+                                                                        <TableCell
+                                                                            key={`group-total-${col}`}
+                                                                            align="center"
+                                                                            sx={{
+                                                                                borderRight: '1px solid #e0e0e0',
+                                                                                bgcolor: col === 'totalAmount' ? '#efebe9' : col === 'totalQty' ? '#f5f5f5' : 'inherit',
+                                                                                color: col === 'totalAmount' ? '#5d4037' : 'inherit',
+                                                                                fontWeight: 'bold',
+                                                                                fontSize: 13,
+                                                                                py: 1
+                                                                            }}
+                                                                        >
+                                                                            {formattedVal}
+                                                                        </TableCell>
+                                                                    );
+                                                                })}
+                                                            </TableRow>
+                                                            {/* Group Detail Rows */}
+                                                            {groupRows.map((row, index) => {
+                                                                const tQty = (Number(row.totalMeal) || 0) + (Number(row.tea) || 0) + (Number(row.fs) || 0) + (Number(row.nb) || 0);
+                                                                const tAmt = (Number(row.mealAmount) || 0) + (Number(row.tea_Rs) || 0) + (Number(row.fS_RS) || 0) + (Number(row.nB_RS) || 0);
 
-                                                return (
-                                                    <TableRow key={index} hover sx={{ '&:nth-of-type(even)': { bgcolor: '#fcfcfc' } }}>
-                                                        {reportColumns.map((col) => (
-                                                            <TableCell
-                                                                key={col}
-                                                                align="center"
-                                                                sx={{ fontSize: 13, py: 1, borderRight: '1px solid #f0f0f0' }}
-                                                            >
-                                                                {row[col] !== null && row[col] !== undefined
-                                                                    ? String(row[col])
-                                                                    : '—'}
-                                                            </TableCell>
-                                                        ))}
-                                                        {/* Horizontal computed Total Qty */}
-                                                        <TableCell
-                                                            align="center"
-                                                            sx={{ fontSize: 13, py: 1, fontWeight: 'bold', bgcolor: '#f5f5f5', borderRight: '1px solid #e0e0e0' }}
-                                                        >
-                                                            {tQty}
-                                                        </TableCell>
-                                                        {/* Horizontal computed Total Amt */}
-                                                        <TableCell
-                                                            align="center"
-                                                            sx={{ fontSize: 13, py: 1, fontWeight: 'bold', bgcolor: '#efebe9', color: '#5d4037' }}
-                                                        >
-                                                            {tAmt.toFixed(2)}
-                                                        </TableCell>
-                                                    </TableRow>
-                                                );
-                                            })}
+                                                                return (
+                                                                    <TableRow key={`${ezoneKey}-${index}`} hover sx={{ '&:nth-of-type(even)': { bgcolor: '#fcfcfc' } }}>
+                                                                        {reportColumns.map((col) => {
+                                                                            let displayVal = row[col] !== null && row[col] !== undefined ? String(row[col]) : '—';
+                                                                            if (col === 'ezone') {
+                                                                                displayVal = ''; // blank out contractor name to match hierarchical view
+                                                                            }
+                                                                            return (
+                                                                                <TableCell
+                                                                                    key={col}
+                                                                                    align="center"
+                                                                                    sx={{ fontSize: 13, py: 1, borderRight: '1px solid #f0f0f0' }}
+                                                                                >
+                                                                                    {displayVal}
+                                                                                </TableCell>
+                                                                            );
+                                                                        })}
+                                                                        {/* Horizontal computed Total Qty */}
+                                                                        <TableCell
+                                                                            align="center"
+                                                                            sx={{ fontSize: 13, py: 1, fontWeight: 'bold', bgcolor: '#f5f5f5', borderRight: '1px solid #e0e0e0' }}
+                                                                        >
+                                                                            {tQty}
+                                                                        </TableCell>
+                                                                        {/* Horizontal computed Total Amt */}
+                                                                        <TableCell
+                                                                            align="center"
+                                                                            sx={{ fontSize: 13, py: 1, fontWeight: 'bold', bgcolor: '#efebe9', color: '#5d4037' }}
+                                                                        >
+                                                                            {tAmt.toFixed(2)}
+                                                                        </TableCell>
+                                                                    </TableRow>
+                                                                );
+                                                            })}
+                                                        </React.Fragment>
+                                                    );
+                                                });
+                                            })()}
 
                                             {/* Vertical Total Row (Footer) */}
                                             <TableRow sx={{ bgcolor: '#eceff1', '& td': { fontWeight: 'bold', fontSize: 13, py: 1.5 } }}>
