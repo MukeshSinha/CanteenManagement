@@ -14,6 +14,7 @@ import EmployeeRawPunch from '../Components/EmployeeRawPunch';
 import EmployeeContractorCategory from '../Components/EmployeeContractorCategory';
 import ContractorWiseMealSummary from '../Components/ContractorWiseMealSummary';
 import ContractorDeptWiseSummary from '../Components/ContractorDeptWiseSummary';
+import ContractorCategoryDeptWiseSummary from '../Components/ContractorCategoryDeptWiseSummary';
 import SummarySprlHead from '../Components/SummarySprlHead';
 import UserDashboard from '../Components/UserDashboard';
 
@@ -78,6 +79,7 @@ function App() {
                         <Route path="EmployeeContractorCategory" element={<EmployeeContractorCategory />} />
                         <Route path="ContractorWiseMeal" element={<ContractorWiseMealSummary />} />
                         <Route path="ContractorDeptWise" element={<ContractorDeptWiseSummary />} />
+                        <Route path="ContractorCategoryDeptWise" element={<ContractorCategoryDeptWiseSummary />} />
                         <Route path="SummarySprlHead" element={<SummarySprlHead />} />
                     </Route>
                 </Route>

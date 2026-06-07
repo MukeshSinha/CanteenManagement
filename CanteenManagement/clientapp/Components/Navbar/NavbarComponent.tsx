@@ -170,6 +170,9 @@ const NavbarComponent: React.FC = () => {
                                     <NavDropdown.Item as={Link} to="/reports/summary/ContractorDeptWise">
                                         Contractor and Dept. wise summary
                                     </NavDropdown.Item>
+                                    <NavDropdown.Item as={Link} to="/reports/summary/ContractorCategoryDeptWise">
+                                        Contractor Category and Dept. wise summary
+                                    </NavDropdown.Item>
                                     <NavDropdown.Item as={Link} to="/reports/summary/SummarySprlHead">
                                         Summary SPRL Head
                                     </NavDropdown.Item>

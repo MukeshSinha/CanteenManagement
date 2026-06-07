@@ -86,6 +86,7 @@ const ContractorDeptWiseSummary: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [showReport, setShowReport] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>('');
+    const [categorySearch, setCategorySearch] = useState<string>('');
 
     // SweetAlert2 Toast configuration
     const Toast = Swal.mixin({
@@ -109,10 +110,16 @@ const ContractorDeptWiseSummary: React.FC = () => {
     };
 
     const handleSelectAllCategories = () => {
-        if (categories.length > 0 && selectedCategories.length === categories.length) {
-            setSelectedCategories([]);
+        const visibleCats = categories.filter(cat =>
+            cat.toLowerCase().includes(categorySearch.toLowerCase())
+        );
+        const allVisibleSelected = visibleCats.length > 0 && visibleCats.every(cat => selectedCategories.includes(cat));
+
+        if (allVisibleSelected) {
+            setSelectedCategories(selectedCategories.filter(cat => !visibleCats.includes(cat)));
         } else {
-            setSelectedCategories([...categories]);
+            const union = Array.from(new Set([...selectedCategories, ...visibleCats]));
+            setSelectedCategories(union);
         }
     };
 
@@ -399,9 +406,27 @@ const ContractorDeptWiseSummary: React.FC = () => {
                     </Stack>
 
                     {/* Row 2: Category List Box with Checkboxes */}
-                    <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1, color: '#455a64' }}>
-                        Categories Filter
-                    </Typography>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ color: '#455a64' }}>
+                            Categories Filter
+                        </Typography>
+                        <TextField
+                            size="small"
+                            placeholder="Search category..."
+                            value={categorySearch}
+                            onChange={(e) => setCategorySearch(e.target.value)}
+                            sx={{ width: 200, bgcolor: 'white' }}
+                            slotProps={{
+                                input: {
+                                    startAdornment: (
+                                        <InputAdornment position="start">
+                                            <SearchIcon sx={{ fontSize: 18 }} />
+                                        </InputAdornment>
+                                    ),
+                                },
+                            }}
+                        />
+                    </Stack>
                     <Box sx={{
                         border: '1px solid #cfd8dc',
                         borderRadius: 2,
@@ -421,8 +446,19 @@ const ContractorDeptWiseSummary: React.FC = () => {
                                     <FormControlLabel
                                         control={
                                             <Checkbox
-                                                checked={categories.length > 0 && selectedCategories.length === categories.length}
-                                                indeterminate={selectedCategories.length > 0 && selectedCategories.length < categories.length}
+                                                checked={
+                                                    (() => {
+                                                        const visible = categories.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase()));
+                                                        return visible.length > 0 && visible.every(cat => selectedCategories.includes(cat));
+                                                    })()
+                                                }
+                                                indeterminate={
+                                                    (() => {
+                                                        const visible = categories.filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase()));
+                                                        const selectedCount = visible.filter(cat => selectedCategories.includes(cat)).length;
+                                                        return selectedCount > 0 && selectedCount < visible.length;
+                                                    })()
+                                                }
                                                 onChange={handleSelectAllCategories}
                                                 color="primary"
                                                 size="small"
@@ -432,21 +468,23 @@ const ContractorDeptWiseSummary: React.FC = () => {
                                     />
                                 </Box>
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                                    {categories.map((cat) => (
-                                        <Box key={cat} sx={{ minWidth: { xs: '100px', sm: '130px' } }}>
-                                            <FormControlLabel
-                                                control={
-                                                    <Checkbox
-                                                        checked={selectedCategories.includes(cat)}
-                                                        onChange={() => handleCategoryToggle(cat)}
-                                                        color="primary"
-                                                        size="small"
-                                                    />
-                                                }
-                                                label={<Typography variant="body2" sx={{ color: '#37474f' }}>{cat}</Typography>}
-                                            />
-                                        </Box>
-                                    ))}
+                                    {categories
+                                        .filter(cat => cat.toLowerCase().includes(categorySearch.toLowerCase()))
+                                        .map((cat) => (
+                                            <Box key={cat} sx={{ minWidth: { xs: '100px', sm: '130px' } }}>
+                                                <FormControlLabel
+                                                    control={
+                                                        <Checkbox
+                                                            checked={selectedCategories.includes(cat)}
+                                                            onChange={() => handleCategoryToggle(cat)}
+                                                            color="primary"
+                                                            size="small"
+                                                        />
+                                                    }
+                                                    label={<Typography variant="body2" sx={{ color: '#37474f' }}>{cat}</Typography>}
+                                                />
+                                            </Box>
+                                        ))}
                                 </Box>
                             </>
                         )}

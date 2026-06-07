@@ -146,8 +146,8 @@ function CanteenDashboard() {
         fetchRawPunch({ fordate: getTodayDate() }, 'Today Punch Details');
     };
 
-    const handleToaClick = () => {
-        fetchRawPunch({ category: 'Toa', fordate: getTodayDate() }, 'TOA Details');
+    const handleContClick = () => {
+        fetchRawPunch({ category: 'CONT', fordate: getTodayDate() }, 'CONT Details');
     };
 
     const handleNapsClick = () => {
@@ -246,7 +246,7 @@ function CanteenDashboard() {
                                 px: 1
                             }}>
                                 {Object.entries(dashboardData.employeeStats)
-                                    .filter(([key]) => !['total', 'toa', 'naps', 'fot'].includes(key.toLowerCase()))
+                                    .filter(([key]) => !['total', 'toa', 'cont', 'naps', 'fot'].includes(key.toLowerCase()))
                                     .map(([key, val]) => {
                                         const label = key.toLowerCase() === 'worker' ? 'Workers' : key.charAt(0).toUpperCase() + key.slice(1);
                                         return (
@@ -262,7 +262,7 @@ function CanteenDashboard() {
                 </Card>
 
                 <Card
-                    onClick={handleToaClick}
+                    onClick={handleContClick}
                     sx={{
                         flex: '1 1 180px',
                         maxWidth: 220,
@@ -278,9 +278,9 @@ function CanteenDashboard() {
                     }}
                 >
                     <CardContent sx={{ textAlign: 'center', pb: 2 }}>
-                        <Typography variant="subtitle2">Toa</Typography>
+                        <Typography variant="subtitle2">CONT</Typography>
                         <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
-                            {dashboardData.employeeStats?.toa ?? 0}
+                            {dashboardData.employeeStats?.cont ?? dashboardData.employeeStats?.CONT ?? dashboardData.employeeStats?.toa ?? 0}
                         </Typography>
                         <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: 'block' }}>
                             Click to view details
