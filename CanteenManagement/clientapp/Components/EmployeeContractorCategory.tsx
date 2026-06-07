@@ -56,7 +56,8 @@ const EmployeeContractorCategory: React.FC = () => {
     const [upToDate, setUpToDate] = useState<string>('');
     
     // Category options & state
-    const categoriesList = ['Staff', 'Officer', 'Worker', 'DTL', 'Sub', 'Cont', 'NAPS', 'TOA', 'APP', 'FOT'];
+    const [categoriesList, setCategoriesList] = useState<string[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState<boolean>(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
     // Contractor options & state
@@ -88,7 +89,7 @@ const EmployeeContractorCategory: React.FC = () => {
         }
     });
 
-    // Fetch contractors on component mount
+    // Fetch contractors and categories on component mount
     useEffect(() => {
         const loadContractors = async () => {
             setContractorLoading(true);
@@ -107,7 +108,25 @@ const EmployeeContractorCategory: React.FC = () => {
             }
         };
 
+        const loadCategories = async () => {
+            setCategoriesLoading(true);
+            try {
+                const response = await apiFetch('Category/get-category');
+                let parsedResult = typeof response === 'string' ? JSON.parse(response) : response;
+                const fetchedList = parsedResult?.dataFetch?.table
+                    ?.map((item: any) => String(item.etype ?? '').trim())
+                    ?.filter((name: string) => name) ?? [];
+
+                setCategoriesList(fetchedList);
+            } catch (err) {
+                console.error("Failed to load categories list:", err);
+            } finally {
+                setCategoriesLoading(false);
+            }
+        };
+
         loadContractors();
+        loadCategories();
     }, []);
 
     const handleShowReport = async () => {
@@ -302,12 +321,22 @@ const EmployeeContractorCategory: React.FC = () => {
                             fullWidth
                             options={categoriesList}
                             value={selectedCategory}
+                            loading={categoriesLoading}
                             onChange={(_, newValue) => setSelectedCategory(newValue)}
                             renderInput={(params) => (
                                 <TextField
                                     {...params}
                                     label="Category"
                                     placeholder="Select Category..."
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <>
+                                                {categoriesLoading ? <CircularProgress size={20} /> : null}
+                                                {params.InputProps.endAdornment}
+                                            </>
+                                        ),
+                                    }}
                                 />
                             )}
                         />

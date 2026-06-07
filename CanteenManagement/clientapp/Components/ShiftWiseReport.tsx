@@ -28,12 +28,13 @@ import * as XLSX from 'xlsx';
 import { apiFetch } from '../src/utils/api'
 //import { apiCallingData } from '../src/Services/apiCalling';    
 
-// only this part is hardcoded
-const categories = ['Staff', 'Officer', 'DTL', 'Sub', 'Cont', 'NAPS', 'TOA', 'APP'];
+
 
 function ShiftWiseReport() {
     const [fromDate, setFromDate] = useState<string>('');
     const [upToDate, setUpToDate] = useState<string>('');
+    const [categories, setCategories] = useState<string[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState<boolean>(false);
     const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
     const [contractor, setContractor] = useState<string | null>(null);
     const [contractors, setContractors] = useState<string[]>([]);
@@ -115,8 +116,25 @@ function ShiftWiseReport() {
 
     // ────────────────────────────────────────────────
 
+    const fetchCategories = async () => {
+        try {
+            setCategoriesLoading(true);
+            let result = await apiFetch('Category/get-category');
+            if (typeof result === 'string') result = JSON.parse(result);
+            const list = result?.dataFetch?.table
+                ?.map((item: any) => String(item.etype ?? '').trim())
+                ?.filter((name: string) => name) ?? [];
+            setCategories(list);
+        } catch (err: unknown) {
+            console.error('fetchCategories error:', err);
+        } finally {
+            setCategoriesLoading(false);
+        }
+    };
+
     useEffect(() => {
-        fetchContractors()
+        fetchContractors();
+        fetchCategories();
     }, []);
 
     const handleShow = async () => {
@@ -280,9 +298,25 @@ function ShiftWiseReport() {
                             fullWidth
                             options={categories}
                             value={selectedCategory}
+                            loading={categoriesLoading}
                             onChange={(_, newValue) => setSelectedCategory(newValue)}
                             renderInput={(params) => (
-                                <TextField {...params} label="Category" required />
+                                <TextField 
+                                    {...params} 
+                                    label="Category" 
+                                    required 
+                                    InputProps={{
+                                        ...params.InputProps,
+                                        endAdornment: (
+                                            <>
+                                                {categoriesLoading ? (
+                                                    <CircularProgress size={20} />
+                                                ) : null}
+                                                {params.InputProps.endAdornment}
+                                            </>
+                                        ),
+                                    }}
+                                />
                             )}
                         />
 

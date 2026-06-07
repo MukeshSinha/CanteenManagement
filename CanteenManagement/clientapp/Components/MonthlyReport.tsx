@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Button,
@@ -29,7 +29,7 @@ import { saveAs } from 'file-saver';
 import { apiFetch } from '../src/utils/api';
 import Swal from 'sweetalert2';
 
-const categories = ['Staff', 'Officer', 'DTL', 'Sub', 'Cont', 'NAPS', 'TOA', 'APP', 'FOT'];
+
 
 const columnHeaderMap: Record<string, string> = {
     ezone: "Employee Zone",
@@ -73,6 +73,8 @@ interface ReportRow {
 const MonthlyReport: React.FC = () => {
     const [fromDate, setFromDate] = useState<string>('');
     const [upToDate, setUpToDate] = useState<string>('');
+    const [categories, setCategories] = useState<string[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState<boolean>(false);
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [reportRows, setReportRows] = useState<ReportRow[]>([]);
     const [reportColumns, setReportColumns] = useState<string[]>([]);
@@ -103,12 +105,31 @@ const MonthlyReport: React.FC = () => {
     };
 
     const handleSelectAllCategories = () => {
-        if (selectedCategories.length === categories.length) {
+        if (categories.length > 0 && selectedCategories.length === categories.length) {
             setSelectedCategories([]);
         } else {
             setSelectedCategories([...categories]);
         }
     };
+
+    useEffect(() => {
+        const loadCategories = async () => {
+            setCategoriesLoading(true);
+            try {
+                const response = await apiFetch('Category/get-category');
+                let parsedResult = typeof response === 'string' ? JSON.parse(response) : response;
+                const fetchedList = parsedResult?.dataFetch?.table
+                    ?.map((item: any) => String(item.etype ?? '').trim())
+                    ?.filter((name: string) => name) ?? [];
+                setCategories(fetchedList);
+            } catch (err) {
+                console.error("Failed to load categories:", err);
+            } finally {
+                setCategoriesLoading(false);
+            }
+        };
+        loadCategories();
+    }, []);
 
     const fetchMonthlyReport = async (params: { fromDate: string; upToDate: string; category: string }) => {
         try {
@@ -334,37 +355,45 @@ const MonthlyReport: React.FC = () => {
                         bgcolor: '#fafafa',
                         mb: 3
                     }}>
-                        <Box sx={{ mb: 1, borderBottom: '1px solid #eceff1', pb: 1 }}>
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        checked={selectedCategories.length === categories.length}
-                                        indeterminate={selectedCategories.length > 0 && selectedCategories.length < categories.length}
-                                        onChange={handleSelectAllCategories}
-                                        color="primary"
-                                        size="small"
-                                    />
-                                }
-                                label={<Typography variant="body2" fontWeight="bold">Select All Categories</Typography>}
-                            />
-                        </Box>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                            {categories.map((cat) => (
-                                <Box key={cat} sx={{ minWidth: { xs: '100px', sm: '130px' } }}>
+                        {categoriesLoading ? (
+                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 2 }}>
+                                <CircularProgress size={30} />
+                            </Box>
+                        ) : (
+                            <>
+                                <Box sx={{ mb: 1, borderBottom: '1px solid #eceff1', pb: 1 }}>
                                     <FormControlLabel
                                         control={
                                             <Checkbox
-                                                checked={selectedCategories.includes(cat)}
-                                                onChange={() => handleCategoryToggle(cat)}
+                                                checked={categories.length > 0 && selectedCategories.length === categories.length}
+                                                indeterminate={selectedCategories.length > 0 && selectedCategories.length < categories.length}
+                                                onChange={handleSelectAllCategories}
                                                 color="primary"
                                                 size="small"
                                             />
                                         }
-                                        label={<Typography variant="body2" sx={{ color: '#37474f' }}>{cat}</Typography>}
+                                        label={<Typography variant="body2" fontWeight="bold">Select All Categories</Typography>}
                                     />
                                 </Box>
-                            ))}
-                        </Box>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
+                                    {categories.map((cat) => (
+                                        <Box key={cat} sx={{ minWidth: { xs: '100px', sm: '130px' } }}>
+                                            <FormControlLabel
+                                                control={
+                                                    <Checkbox
+                                                        checked={selectedCategories.includes(cat)}
+                                                        onChange={() => handleCategoryToggle(cat)}
+                                                        color="primary"
+                                                        size="small"
+                                                    />
+                                                }
+                                                label={<Typography variant="body2" sx={{ color: '#37474f' }}>{cat}</Typography>}
+                                            />
+                                        </Box>
+                                    ))}
+                                </Box>
+                            </>
+                        )}
                     </Box>
 
                     {/* Row 3: Action Button */}

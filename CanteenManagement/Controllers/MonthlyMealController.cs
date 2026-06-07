@@ -25,5 +25,16 @@ namespace CanteenManagement.Controllers
             var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
             return Content(response, "application/json");
         }
+
+        // Fetch the report for the department/Contractor wise
+
+        [HttpGet("report-cont-deptWise")]
+        public async Task<IActionResult> ReportContDeptWise([FromQuery] string? fromdate = null, [FromQuery] string? uptodate = null, [FromQuery] string? category = null)
+        {
+            string url = ApiService.Canteen + $"CanteenPunch/ContractorDeptWise?fromdate={fromdate}&uptodate={uptodate}&category={category}";
+            var mHeader = _headers.GetHeaders();
+            var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+            return Content(response, "application/json");
+        }
     }
 }
