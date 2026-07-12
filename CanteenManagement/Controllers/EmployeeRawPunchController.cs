@@ -27,7 +27,7 @@ namespace CanteenManagement.Controllers
             return Content(response, "application/json");
         }
 
-        // Get Employee Punch Category Contractor
+        // Get Employee Punch Category Contractors
 
         [HttpGet("employee-punch-category-contractor")]
         public async Task<IActionResult> employeePunchCategoryContractor([FromQuery] string? fromdate = null, [FromQuery] string? uptodate = null, [FromQuery] string? contractor = null, [FromQuery] string? category = null)
