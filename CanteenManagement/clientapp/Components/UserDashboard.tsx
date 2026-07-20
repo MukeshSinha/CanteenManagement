@@ -28,6 +28,9 @@ interface UserDashboardData {
 interface PunchRow {
     empCode: string;
     punchTime: string;
+    name: string;
+    empType: string;
+    eZone: string;
     prevPunchTime: string | null;
 }
 
@@ -132,6 +135,9 @@ export default function UserDashboard() {
         const q = searchText.toLowerCase();
         return (
             row.empCode?.toLowerCase().includes(q) ||
+            row.name?.toLowerCase().includes(q) ||
+            row.empType?.toLowerCase().includes(q) ||
+            row.eZone?.toLowerCase().includes(q) ||
             row.punchTime?.toLowerCase().includes(q) ||
             (row.prevPunchTime && row.prevPunchTime.toLowerCase().includes(q))
         );
@@ -355,7 +361,7 @@ export default function UserDashboard() {
                                                 <Table size="small" stickyHeader>
                                                     <TableHead>
                                                         <TableRow>
-                                                            {['#', 'Emp Code', 'Punch Time'].map(col => (
+                                                            {['#', 'Employee Code','Employee Name','Employee Type','Zone','Punch Time'].map(col => (
                                                                 <TableCell
                                                                     key={col}
                                                                     sx={{
@@ -384,6 +390,9 @@ export default function UserDashboard() {
                                                                 >
                                                                     <TableCell sx={{ fontSize: 12, color: '#888', minWidth: 36 }}>{globalIdx + 1}</TableCell>
                                                                     <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empCode}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.name}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.empType}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.eZone}</TableCell>
                                                                     <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatTime(row.punchTime)}</TableCell>
                                                                 </TableRow>
                                                             );
