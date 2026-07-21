@@ -14,7 +14,13 @@ import {
     TableRow,
     Paper,
     Divider,
+    Button,
 } from '@mui/material';
+import {
+    Download as DownloadIcon,
+} from '@mui/icons-material';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 import { BarChart } from '@mui/x-charts/BarChart';
 import { LineChart } from '@mui/x-charts/LineChart';
@@ -184,6 +190,49 @@ function CanteenDashboard() {
             row.sft?.toLowerCase().includes(q)
         );
     });
+
+    const exportToCSV = () => {
+        if (!filteredRows || filteredRows.length === 0) return;
+        const headers = ["Sr.No", "Emp Code", "Name", "Type", "Department", "Date", "Punch Time", "Shift"];
+        const exportData = filteredRows.map((row, idx) => [
+            idx + 1,
+            `"${String(row.empCode || '').replace(/"/g, '""')}"`,
+            `"${String(row.empName || '').replace(/"/g, '""')}"`,
+            `"${String(row.empType || '').replace(/"/g, '""')}"`,
+            `"${String(row.dept || '').replace(/"/g, '""')}"`,
+            `"${String(formatDate(row.att_Date) || '').replace(/"/g, '""')}"`,
+            `"${String(formatTime(row.punchTime) || '').replace(/"/g, '""')}"`,
+            `"${String(row.sft || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+        saveAs(blob, `${cleanTitle}.csv`);
+    };
+
+    const exportToExcel = () => {
+        if (!filteredRows || filteredRows.length === 0) return;
+        const dataRows = filteredRows.map((row, idx) => ({
+            "Sr.No": idx + 1,
+            "Emp Code": row.empCode || '',
+            "Name": row.empName || '',
+            "Type": row.empType || '',
+            "Department": row.dept || '',
+            "Date": formatDate(row.att_Date) || '',
+            "Punch Time": formatTime(row.punchTime) || '',
+            "Shift": row.sft || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataRows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Details");
+
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+        const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+        saveAs(blob, `${cleanTitle}.xlsx`);
+    };
 
     const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
     const pagedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
@@ -363,7 +412,7 @@ function CanteenDashboard() {
                             bgcolor: '#fff',
                             borderRadius: 3,
                             width: '100%',
-                            maxWidth: 900,
+                            maxWidth: 950,
                             maxHeight: '85vh',
                             display: 'flex',
                             flexDirection: 'column',
@@ -380,6 +429,8 @@ function CanteenDashboard() {
                                 py: 2,
                                 borderBottom: '1px solid #e0e0e0',
                                 bgcolor: '#f8f9fa',
+                                flexWrap: 'wrap',
+                                gap: 1.5,
                             }}
                         >
                             <Box>
@@ -392,22 +443,57 @@ function CanteenDashboard() {
                                     </Typography>
                                 )}
                             </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                                 {!modal.loading && !modal.error && modal.rows.length > 0 && (
-                                    <input
-                                        type="text"
-                                        placeholder="Search..."
-                                        value={searchText}
-                                        onChange={e => { setSearchText(e.target.value); setPage(0); }}
-                                        style={{
-                                            border: '1px solid #d0d7de',
-                                            borderRadius: 8,
-                                            padding: '6px 12px',
-                                            fontSize: 13,
-                                            outline: 'none',
-                                            width: 180,
-                                        }}
-                                    />
+                                    <>
+                                        <Button
+                                            variant="contained"
+                                            color="success"
+                                            size="small"
+                                            startIcon={<DownloadIcon />}
+                                            onClick={exportToExcel}
+                                            disabled={filteredRows.length === 0}
+                                            sx={{
+                                                textTransform: 'none',
+                                                fontWeight: 600,
+                                                fontSize: 12,
+                                                borderRadius: 1.5,
+                                                boxShadow: '0 2px 6px rgba(46,125,50,0.2)',
+                                            }}
+                                        >
+                                            Export Excel
+                                        </Button>
+                                        <Button
+                                            variant="outlined"
+                                            color="primary"
+                                            size="small"
+                                            startIcon={<DownloadIcon />}
+                                            onClick={exportToCSV}
+                                            disabled={filteredRows.length === 0}
+                                            sx={{
+                                                textTransform: 'none',
+                                                fontWeight: 600,
+                                                fontSize: 12,
+                                                borderRadius: 1.5,
+                                            }}
+                                        >
+                                            Export CSV
+                                        </Button>
+                                        <input
+                                            type="text"
+                                            placeholder="Search..."
+                                            value={searchText}
+                                            onChange={e => { setSearchText(e.target.value); setPage(0); }}
+                                            style={{
+                                                border: '1px solid #d0d7de',
+                                                borderRadius: 8,
+                                                padding: '6px 12px',
+                                                fontSize: 13,
+                                                outline: 'none',
+                                                width: 150,
+                                            }}
+                                        />
+                                    </>
                                 )}
                                 <Box
                                     onClick={closeModal}
@@ -467,7 +553,7 @@ function CanteenDashboard() {
                                     <Table size="small" stickyHeader>
                                         <TableHead>
                                             <TableRow>
-                                                {['#', 'Emp Code', 'Name', 'Type', 'Department', 'Date', 'Punch Time', 'Shift'].map(col => (
+                                                {['Sr.No', 'Emp Code', 'Name', 'Type', 'Department', 'Date', 'Punch Time', 'Shift'].map(col => (
                                                     <TableCell
                                                         key={col}
                                                         sx={{

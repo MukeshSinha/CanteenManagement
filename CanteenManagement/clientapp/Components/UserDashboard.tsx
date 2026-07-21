@@ -15,7 +15,13 @@ import {
     TableHead,
     TableRow,
     Paper,
+    Button,
 } from "@mui/material";
+import {
+    Download as DownloadIcon,
+} from "@mui/icons-material";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
 import { Row, Col } from "react-bootstrap";
 import { BarChart } from "@mui/x-charts/BarChart";
 import { LineChart } from "@mui/x-charts/LineChart";
@@ -143,6 +149,45 @@ export default function UserDashboard() {
         );
     });
 
+    const exportToCSV = () => {
+        if (!filteredRows || filteredRows.length === 0) return;
+        const headers = ["Sr.No", "Employee Code", "Employee Name", "Employee Type", "Zone", "Punch Time"];
+        const exportData = filteredRows.map((row, idx) => [
+            idx + 1,
+            `"${String(row.empCode || '').replace(/"/g, '""')}"`,
+            `"${String(row.name || '').replace(/"/g, '""')}"`,
+            `"${String(row.empType || '').replace(/"/g, '""')}"`,
+            `"${String(row.eZone || '').replace(/"/g, '""')}"`,
+            `"${String(formatTime(row.punchTime) || '').replace(/"/g, '""')}"`
+        ]);
+
+        const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+        saveAs(blob, `${cleanTitle}.csv`);
+    };
+
+    const exportToExcel = () => {
+        if (!filteredRows || filteredRows.length === 0) return;
+        const dataRows = filteredRows.map((row, idx) => ({
+            "Sr.No": idx + 1,
+            "Employee Code": row.empCode || '',
+            "Employee Name": row.name || '',
+            "Employee Type": row.empType || '',
+            "Zone": row.eZone || '',
+            "Punch Time": formatTime(row.punchTime) || ''
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataRows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Details");
+
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+        const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+        saveAs(blob, `${cleanTitle}.xlsx`);
+    };
+
     const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
     const pagedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
@@ -257,7 +302,7 @@ export default function UserDashboard() {
                                         bgcolor: '#fff',
                                         borderRadius: 3,
                                         width: '100%',
-                                        maxWidth: 800,
+                                        maxWidth: 850,
                                         maxHeight: '85vh',
                                         display: 'flex',
                                         flexDirection: 'column',
@@ -274,6 +319,8 @@ export default function UserDashboard() {
                                             py: 2,
                                             borderBottom: '1px solid #e0e0e0',
                                             bgcolor: '#f8f9fa',
+                                            flexWrap: 'wrap',
+                                            gap: 1.5,
                                         }}
                                     >
                                         <Box>
@@ -286,22 +333,57 @@ export default function UserDashboard() {
                                                 </Typography>
                                             )}
                                         </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                                             {!modal.loading && !modal.error && modal.rows.length > 0 && (
-                                                <input
-                                                    type="text"
-                                                    placeholder="Search..."
-                                                    value={searchText}
-                                                    onChange={e => { setSearchText(e.target.value); setPage(0); }}
-                                                    style={{
-                                                        border: '1px solid #d0d7de',
-                                                        borderRadius: 8,
-                                                        padding: '6px 12px',
-                                                        fontSize: 13,
-                                                        outline: 'none',
-                                                        width: 180,
-                                                    }}
-                                                />
+                                                <>
+                                                    <Button
+                                                        variant="contained"
+                                                        color="success"
+                                                        size="small"
+                                                        startIcon={<DownloadIcon />}
+                                                        onClick={exportToExcel}
+                                                        disabled={filteredRows.length === 0}
+                                                        sx={{
+                                                            textTransform: 'none',
+                                                            fontWeight: 600,
+                                                            fontSize: 12,
+                                                            borderRadius: 1.5,
+                                                            boxShadow: '0 2px 6px rgba(46,125,50,0.2)',
+                                                        }}
+                                                    >
+                                                        Export Excel
+                                                    </Button>
+                                                    <Button
+                                                        variant="outlined"
+                                                        color="primary"
+                                                        size="small"
+                                                        startIcon={<DownloadIcon />}
+                                                        onClick={exportToCSV}
+                                                        disabled={filteredRows.length === 0}
+                                                        sx={{
+                                                            textTransform: 'none',
+                                                            fontWeight: 600,
+                                                            fontSize: 12,
+                                                            borderRadius: 1.5,
+                                                        }}
+                                                    >
+                                                        Export CSV
+                                                    </Button>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Search..."
+                                                        value={searchText}
+                                                        onChange={e => { setSearchText(e.target.value); setPage(0); }}
+                                                        style={{
+                                                            border: '1px solid #d0d7de',
+                                                            borderRadius: 8,
+                                                            padding: '6px 12px',
+                                                            fontSize: 13,
+                                                            outline: 'none',
+                                                            width: 150,
+                                                        }}
+                                                    />
+                                                </>
                                             )}
                                             <Box
                                                 onClick={closeModal}
@@ -361,7 +443,7 @@ export default function UserDashboard() {
                                                 <Table size="small" stickyHeader>
                                                     <TableHead>
                                                         <TableRow>
-                                                            {['#', 'Employee Code','Employee Name','Employee Type','Zone','Punch Time'].map(col => (
+                                                            {['Sr.No', 'Employee Code','Employee Name','Employee Type','Zone','Punch Time'].map(col => (
                                                                 <TableCell
                                                                     key={col}
                                                                     sx={{
