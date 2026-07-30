@@ -61,6 +61,12 @@ function CanteenDashboard() {
         employeeStats: Record<string, number> | null;
     }
 
+    interface CouponData {
+        tea: number;
+        fs: number;
+        bs: number;
+    }
+
     interface RawPunchRow {
         empCode: string;
         empName: string;
@@ -84,6 +90,12 @@ function CanteenDashboard() {
         employeeStats: null,
     });
 
+    const [couponData, setCouponData] = useState<CouponData>({
+        tea: 0,
+        fs: 0,
+        bs: 0,
+    });
+
     const [modal, setModal] = useState<ModalState>({
         open: false,
         title: '',
@@ -104,13 +116,13 @@ function CanteenDashboard() {
                 if (typeof data === 'string') {
                     data = JSON.parse(data);
                 }
-                
+
                 const table = data?.dataFetch?.table || [];
                 const table1 = data?.dataFetch?.table1 || [];
-                
+
                 const todayPunch = table[0]?.todayPunch || 0;
                 const employeeStats = table1[0] || null;
-                
+
                 setDashboardData({
                     todayPunch,
                     employeeStats,
@@ -119,7 +131,30 @@ function CanteenDashboard() {
                 console.error('Error fetching dashboard data:', error);
             }
         };
+
+        const fetchCouponData = async () => {
+            try {
+                const response = await apiFetch("Canteen-Punch/get-Coupon");
+                let parsedData = response;
+                if (typeof parsedData === "string") {
+                    parsedData = JSON.parse(parsedData);
+                }
+                const table = parsedData?.dataFetch?.table;
+                if (table && table.length > 0) {
+                    const firstRow = table[0];
+                    setCouponData({
+                        tea: typeof firstRow.tea === "number" ? firstRow.tea : (Number(firstRow.tea) || 0),
+                        fs: typeof firstRow.fs === "number" ? firstRow.fs : (Number(firstRow.fs) || 0),
+                        bs: typeof firstRow.bs === "number" ? firstRow.bs : (Number(firstRow.bs) || 0),
+                    });
+                }
+            } catch (err) {
+                console.warn("Failed fetching coupon data", err);
+            }
+        };
+
         fetchDashboardData();
+        fetchCouponData();
     }, []);
 
     const getTodayDate = () => {
@@ -162,6 +197,40 @@ function CanteenDashboard() {
 
     const handleFotClick = () => {
         fetchRawPunch({ category: 'Fot', fordate: getTodayDate() }, 'FOT Details');
+    };
+
+    const fetchCouponDetails = async (endpoint: string, title: string) => {
+        setSearchText('');
+        setPage(0);
+        setModal({ open: true, title, loading: true, error: null, rows: [] });
+
+        try {
+            const data = await apiFetch(endpoint);
+            const rows = (data?.dataFetch?.table || []).map((r: any) => ({
+                empCode: r.empCode || '',
+                empName: r.empName || r.name || '',
+                empType: r.empType || '',
+                dept: r.dept || r.eZone || '',
+                att_Date: r.att_Date || r.punchTime || '',
+                punchTime: r.punchTime || '',
+                sft: r.sft || '-',
+            }));
+            setModal(prev => ({ ...prev, loading: false, rows }));
+        } catch (err: any) {
+            setModal(prev => ({ ...prev, loading: false, error: err?.message || 'Failed to load data.' }));
+        }
+    };
+
+    const handleTeaClick = () => {
+        fetchCouponDetails('Canteen-Punch/get-TeaCoupon', "Today's Tea Coupon Details");
+    };
+
+    const handleFsClick = () => {
+        fetchCouponDetails('Canteen-Punch/get-snacksCoupon', "Today's Snacks Coupon Details");
+    };
+
+    const handleBsClick = () => {
+        fetchCouponDetails('Canteen-Punch/get-BsCoupon', "Today's BS Coupon Details");
     };
 
     const closeModal = () => {
@@ -269,7 +338,7 @@ function CanteenDashboard() {
                     }}
                 >
                     <CardContent sx={{ textAlign: 'center', pb: 2 }}>
-                        <Typography variant="subtitle2">Today Punch</Typography>
+                        <Typography variant="subtitle2">Today Punches</Typography>
                         <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
                             {dashboardData.todayPunch}
                         </Typography>
@@ -282,13 +351,13 @@ function CanteenDashboard() {
                 <Card sx={{ flex: '1 1 200px', maxWidth: 240, bgcolor: '#f57c00', color: 'white', borderRadius: 3 }}>
                     <CardContent sx={{ textAlign: 'center', p: 2 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 1.5 }}>Employee</Typography>
-                        
+
                         {dashboardData.employeeStats && (
-                            <Box sx={{ 
-                                display: 'grid', 
-                                gridTemplateColumns: 'repeat(2, 1fr)', 
-                                gap: 0.5, 
-                                borderTop: '1px solid rgba(255,255,255,0.2)', 
+                            <Box sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(2, 1fr)',
+                                gap: 0.5,
+                                borderTop: '1px solid rgba(255,255,255,0.2)',
                                 pt: 1.5,
                                 fontSize: '0.72rem',
                                 textAlign: 'left',
@@ -384,6 +453,110 @@ function CanteenDashboard() {
                         <Typography variant="subtitle2">Fot</Typography>
                         <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
                             {dashboardData.employeeStats?.fot ?? 0}
+                        </Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: 'block' }}>
+                            Click to view details
+                        </Typography>
+                    </CardContent>
+                </Card>
+            </Box>
+
+            {/* TODAY'S COUPONS SECTION */}
+            <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 2, fontWeight: 600, color: '#333' }}>
+                Today's Coupon
+            </Typography>
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 3,
+                    mb: 4,
+                    alignItems: 'flex-start',
+                }}
+            >
+                {/* TEA CARD */}
+                <Card
+                    onClick={handleTeaClick}
+                    sx={{
+                        flex: '1 1 180px',
+                        maxWidth: 220,
+                        background: 'linear-gradient(135deg, #8d6e63 0%, #4e342e 100%)',
+                        color: 'white',
+                        borderRadius: 3,
+                        cursor: 'pointer',
+                        transition: 'transform 0.18s, box-shadow 0.18s',
+                        '&:hover': {
+                            transform: 'translateY(-4px) scale(1.03)',
+                            boxShadow: '0 8px 24px rgba(78,52,46,0.35)',
+                        },
+                    }}
+                >
+                    <CardContent sx={{ textAlign: 'center', pb: 2 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                            Tea Coupon
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
+                            {couponData.tea}
+                        </Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: 'block' }}>
+                            Click to view details
+                        </Typography>
+                    </CardContent>
+                </Card>
+
+                {/* SNACKS (FS) CARD */}
+                <Card
+                    onClick={handleFsClick}
+                    sx={{
+                        flex: '1 1 180px',
+                        maxWidth: 220,
+                        background: 'linear-gradient(135deg, #26a69a 0%, #00695c 100%)',
+                        color: 'white',
+                        borderRadius: 3,
+                        cursor: 'pointer',
+                        transition: 'transform 0.18s, box-shadow 0.18s',
+                        '&:hover': {
+                            transform: 'translateY(-4px) scale(1.03)',
+                            boxShadow: '0 8px 24px rgba(0,105,92,0.35)',
+                        },
+                    }}
+                >
+                    <CardContent sx={{ textAlign: 'center', pb: 2 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                            Snacks Coupon (FS)
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
+                            {couponData.fs}
+                        </Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: 'block' }}>
+                            Click to view details
+                        </Typography>
+                    </CardContent>
+                </Card>
+
+                {/* BS CARD */}
+                <Card
+                    onClick={handleBsClick}
+                    sx={{
+                        flex: '1 1 180px',
+                        maxWidth: 220,
+                        background: 'linear-gradient(135deg, #7e57c2 0%, #4527a0 100%)',
+                        color: 'white',
+                        borderRadius: 3,
+                        cursor: 'pointer',
+                        transition: 'transform 0.18s, box-shadow 0.18s',
+                        '&:hover': {
+                            transform: 'translateY(-4px) scale(1.03)',
+                            boxShadow: '0 8px 24px rgba(69,39,160,0.35)',
+                        },
+                    }}
+                >
+                    <CardContent sx={{ textAlign: 'center', pb: 2 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                            BS Coupon
+                        </Typography>
+                        <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 1 }}>
+                            {couponData.bs}
                         </Typography>
                         <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: 'block' }}>
                             Click to view details
@@ -592,14 +765,14 @@ function CanteenDashboard() {
                                                                     height: 20,
                                                                     bgcolor:
                                                                         row.empType === 'STAFF' ? '#e3f2fd' :
-                                                                        row.empType === 'WORKER' ? '#e8f5e9' :
-                                                                        row.empType === 'OFFICER' ? '#fff3e0' :
-                                                                        row.empType === 'CONT' ? '#fce4ec' : '#f3e5f5',
+                                                                            row.empType === 'WORKER' ? '#e8f5e9' :
+                                                                                row.empType === 'OFFICER' ? '#fff3e0' :
+                                                                                    row.empType === 'CONT' ? '#fce4ec' : '#f3e5f5',
                                                                     color:
                                                                         row.empType === 'STAFF' ? '#1565c0' :
-                                                                        row.empType === 'WORKER' ? '#2e7d32' :
-                                                                        row.empType === 'OFFICER' ? '#e65100' :
-                                                                        row.empType === 'CONT' ? '#c62828' : '#6a1b9a',
+                                                                            row.empType === 'WORKER' ? '#2e7d32' :
+                                                                                row.empType === 'OFFICER' ? '#e65100' :
+                                                                                    row.empType === 'CONT' ? '#c62828' : '#6a1b9a',
                                                                 }}
                                                             />
                                                         </TableCell>
