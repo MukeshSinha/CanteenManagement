@@ -31,11 +31,40 @@ interface UserDashboardData {
     dinner: number;
 }
 
-interface CouponData {
-    tea: number;
-    fs: number;
-    bs: number;
-}
+const COUPON_CONFIGS = [
+    {
+        key: 'tea',
+        label: 'Tea Coupon',
+        endpoint: 'Canteen-Punch/get-TeaCoupon',
+        gradient: 'linear-gradient(135deg, #8d6e63 0%, #4e342e 100%)',
+        hoverShadow: 'rgba(78,52,46,0.35)',
+    },
+    {
+        key: 'fs',
+        label: 'Snacks Coupon (FS)',
+        endpoint: 'Canteen-Punch/get-snacksCoupon',
+        gradient: 'linear-gradient(135deg, #26a69a 0%, #00695c 100%)',
+        hoverShadow: 'rgba(0,105,92,0.35)',
+    },
+    {
+        key: 'bs',
+        label: 'Beverage & Snacks Coupon',
+        endpoint: 'Canteen-Punch/get-BsCoupon',
+        gradient: 'linear-gradient(135deg, #7e57c2 0%, #4527a0 100%)',
+        hoverShadow: 'rgba(69,39,160,0.35)',
+    },
+];
+
+const FALLBACK_GRADIENTS = [
+    { gradient: 'linear-gradient(135deg, #1976d2 0%, #0d47a1 100%)', shadow: 'rgba(13,71,161,0.35)' }, // Blue
+    { gradient: 'linear-gradient(135deg, #388e3c 0%, #1b5e20 100%)', shadow: 'rgba(27,94,32,0.35)' },  // Green
+    { gradient: 'linear-gradient(135deg, #f57c00 0%, #e65100 100%)', shadow: 'rgba(230,81,0,0.35)' },  // Orange
+    { gradient: 'linear-gradient(135deg, #ab47bc 0%, #6a1b9a 100%)', shadow: 'rgba(106,27,154,0.35)' }, // Purple
+    { gradient: 'linear-gradient(135deg, #26c6da 0%, #00838f 100%)', shadow: 'rgba(0,131,143,0.35)' },  // Cyan
+];
+
+
+type CouponData = Record<string, number>;
 
 interface PunchRow {
     empCode: string;
@@ -125,11 +154,11 @@ export default function UserDashboard() {
                 const table = parsedData?.dataFetch?.table;
                 if (table && table.length > 0) {
                     const firstRow = table[0];
-                    setCouponData({
-                        tea: typeof firstRow.tea === "number" ? firstRow.tea : (Number(firstRow.tea) || 0),
-                        fs: typeof firstRow.fs === "number" ? firstRow.fs : (Number(firstRow.fs) || 0),
-                        bs: typeof firstRow.bs === "number" ? firstRow.bs : (Number(firstRow.bs) || 0),
+                    const mapped: Record<string, number> = {};
+                    Object.entries(firstRow).forEach(([key, val]) => {
+                        mapped[key.toLowerCase()] = typeof val === 'number' ? val : (Number(val) || 0);
                     });
+                    setCouponData(mapped);
                 }
             } catch (err) {
                 console.warn("Failed fetching coupon data", err);
@@ -162,16 +191,8 @@ export default function UserDashboard() {
         fetchPunchDetails('Canteen-Punch/get-todayDinner', "Today's Dinner Punch Details");
     };
 
-    const handleTeaClick = () => {
-        fetchPunchDetails('Canteen-Punch/get-TeaCoupon', "Today's Tea Coupon Details");
-    };
-
-    const handleFsClick = () => {
-        fetchPunchDetails('Canteen-Punch/get-snacksCoupon', "Today's Snacks Coupon Details");
-    };
-
-    const handleBsClick = () => {
-        fetchPunchDetails('Canteen-Punch/get-BsCoupon', "Today's Beverage & Snacks  Coupon Details");
+    const handleCouponClick = (endpoint: string, label: string) => {
+        fetchPunchDetails(endpoint, `Today's ${label} Details`);
     };
 
     const closeModal = () => {
@@ -241,6 +262,33 @@ export default function UserDashboard() {
         days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
         values: [20, 45, 30, 25, 40, 65],
     };
+
+    const couponsToRender = Object.keys(couponData)
+        .filter(key => {
+            const lowerKey = key.toLowerCase();
+            return !['id', 'date', 'fordate', 'punchdate', 'createdat', 'updatedat', 'row', 'srno', 'status', 'empcode', 'name'].includes(lowerKey);
+        })
+        .map((key, index) => {
+            const lowerKey = key.toLowerCase();
+            const config = COUPON_CONFIGS.find(c => c.key.toLowerCase() === lowerKey);
+            if (config) {
+                return {
+                    ...config,
+                    value: couponData[key],
+                };
+            }
+            const fallbackColor = FALLBACK_GRADIENTS[index % FALLBACK_GRADIENTS.length];
+            const dynamicEndpoint = `Canteen-Punch/get-${key.charAt(0).toUpperCase() + key.slice(1)}Coupon`;
+            const dynamicLabel = `${key.charAt(0).toUpperCase() + key.slice(1)} Coupon`;
+            return {
+                key: lowerKey,
+                label: dynamicLabel,
+                endpoint: dynamicEndpoint,
+                gradient: fallbackColor.gradient,
+                hoverShadow: fallbackColor.shadow,
+                value: couponData[key],
+            };
+        });
 
     return (
         <Fade in={true} timeout={800}>
@@ -340,95 +388,37 @@ export default function UserDashboard() {
                                 alignItems: "flex-start",
                             }}
                         >
-                            {/* TEA CARD */}
-                            <Card
-                                onClick={handleTeaClick}
-                                sx={{
-                                    flex: "1 1 180px",
-                                    maxWidth: 220,
-                                    background: "linear-gradient(135deg, #8d6e63 0%, #4e342e 100%)",
-                                    color: "white",
-                                    borderRadius: 3,
-                                    cursor: "pointer",
-                                    transition: "transform 0.18s, box-shadow 0.18s",
-                                    "&:hover": {
-                                        transform: "translateY(-4px) scale(1.03)",
-                                        boxShadow: "0 8px 24px rgba(78,52,46,0.35)",
-                                    },
-                                }}
-                            >
-                                <CardContent sx={{ textAlign: "center", pb: 2 }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                                        Tea Coupon
-                                    </Typography>
-                                    <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
-                                        {couponData.tea}
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
-                                        Click to view details
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-
-                            {/* SNACKS (FS) CARD */}
-                            <Card
-                                onClick={handleFsClick}
-                                sx={{
-                                    flex: "1 1 180px",
-                                    maxWidth: 220,
-                                    background: "linear-gradient(135deg, #26a69a 0%, #00695c 100%)",
-                                    color: "white",
-                                    borderRadius: 3,
-                                    cursor: "pointer",
-                                    transition: "transform 0.18s, box-shadow 0.18s",
-                                    "&:hover": {
-                                        transform: "translateY(-4px) scale(1.03)",
-                                        boxShadow: "0 8px 24px rgba(0,105,92,0.35)",
-                                    },
-                                }}
-                            >
-                                <CardContent sx={{ textAlign: "center", pb: 2 }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                                        Snacks Coupon (FS)
-                                    </Typography>
-                                    <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
-                                        {couponData.fs}
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
-                                        Click to view details
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-
-                            {/* BS CARD */}
-                            <Card
-                                onClick={handleBsClick}
-                                sx={{
-                                    flex: "1 1 180px",
-                                    maxWidth: 220,
-                                    background: "linear-gradient(135deg, #7e57c2 0%, #4527a0 100%)",
-                                    color: "white",
-                                    borderRadius: 3,
-                                    cursor: "pointer",
-                                    transition: "transform 0.18s, box-shadow 0.18s",
-                                    "&:hover": {
-                                        transform: "translateY(-4px) scale(1.03)",
-                                        boxShadow: "0 8px 24px rgba(69,39,160,0.35)",
-                                    },
-                                }}
-                            >
-                                <CardContent sx={{ textAlign: "center", pb: 2 }}>
-                                    <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                                        Beverage & Snacks Coupon
-                                    </Typography>
-                                    <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
-                                        {couponData.bs}
-                                    </Typography>
-                                    <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
-                                        Click to view details
-                                    </Typography>
-                                </CardContent>
-                            </Card>
+                            {couponsToRender.map((coupon) => (
+                                <Card
+                                    key={coupon.key}
+                                    onClick={() => handleCouponClick(coupon.endpoint, coupon.label)}
+                                    sx={{
+                                        flex: "1 1 180px",
+                                        maxWidth: 220,
+                                        background: coupon.gradient,
+                                        color: "white",
+                                        borderRadius: 3,
+                                        cursor: "pointer",
+                                        transition: "transform 0.18s, box-shadow 0.18s",
+                                        "&:hover": {
+                                            transform: "translateY(-4px) scale(1.03)",
+                                            boxShadow: `0 8px 24px ${coupon.hoverShadow}`,
+                                        },
+                                    }}
+                                >
+                                    <CardContent sx={{ textAlign: "center", pb: 2 }}>
+                                        <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                            {coupon.label}
+                                        </Typography>
+                                        <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
+                                            {coupon.value}
+                                        </Typography>
+                                        <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
+                                            Click to view details
+                                        </Typography>
+                                    </CardContent>
+                                </Card>
+                            ))}
                         </Box>
 
                         {/* DETAILS MODAL */}
