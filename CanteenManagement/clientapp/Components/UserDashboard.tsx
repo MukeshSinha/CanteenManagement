@@ -31,6 +31,12 @@ interface UserDashboardData {
     dinner: number;
 }
 
+interface CouponData {
+    tea: number;
+    fs: number;
+    bs: number;
+}
+
 interface PunchRow {
     empCode: string;
     punchTime: string;
@@ -54,6 +60,12 @@ export default function UserDashboard() {
     const [data, setData] = useState<UserDashboardData>({
         lunch: 0,
         dinner: 0,
+    });
+
+    const [couponData, setCouponData] = useState<CouponData>({
+        tea: 0,
+        fs: 0,
+        bs: 0,
     });
 
     const [modal, setModal] = useState<ModalState>({
@@ -103,7 +115,29 @@ export default function UserDashboard() {
             }
         };
 
+        const fetchCouponData = async () => {
+            try {
+                const response = await apiFetch("Canteen-Punch/get-Coupon");
+                let parsedData = response;
+                if (typeof parsedData === "string") {
+                    parsedData = JSON.parse(parsedData);
+                }
+                const table = parsedData?.dataFetch?.table;
+                if (table && table.length > 0) {
+                    const firstRow = table[0];
+                    setCouponData({
+                        tea: typeof firstRow.tea === "number" ? firstRow.tea : (Number(firstRow.tea) || 0),
+                        fs: typeof firstRow.fs === "number" ? firstRow.fs : (Number(firstRow.fs) || 0),
+                        bs: typeof firstRow.bs === "number" ? firstRow.bs : (Number(firstRow.bs) || 0),
+                    });
+                }
+            } catch (err) {
+                console.warn("Failed fetching coupon data", err);
+            }
+        };
+
         fetchDashboardData();
+        fetchCouponData();
     }, []);
 
     const fetchPunchDetails = async (endpoint: string, title: string) => {
@@ -126,6 +160,18 @@ export default function UserDashboard() {
 
     const handleDinnerClick = () => {
         fetchPunchDetails('Canteen-Punch/get-todayDinner', "Today's Dinner Punch Details");
+    };
+
+    const handleTeaClick = () => {
+        fetchPunchDetails('Canteen-Punch/get-TeaCoupon', "Today's Tea Coupon Details");
+    };
+
+    const handleFsClick = () => {
+        fetchPunchDetails('Canteen-Punch/get-snacksCoupon', "Today's Snacks Coupon Details");
+    };
+
+    const handleBsClick = () => {
+        fetchPunchDetails('Canteen-Punch/get-BsCoupon', "Today's Beverage & Snacks  Coupon Details");
     };
 
     const closeModal = () => {
@@ -273,6 +319,110 @@ export default function UserDashboard() {
                                     </Typography>
                                     <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
                                         {data.dinner}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
+                                        Click to view details
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+                        </Box>
+
+                        {/* TODAY'S COUPONS SECTION */}
+                        <Typography variant="h5" gutterBottom sx={{ mt: 4, mb: 2, fontWeight: 600, color: "#333" }}>
+                            Today's Coupon
+                        </Typography>
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexWrap: "wrap",
+                                gap: 3,
+                                mb: 4,
+                                alignItems: "flex-start",
+                            }}
+                        >
+                            {/* TEA CARD */}
+                            <Card
+                                onClick={handleTeaClick}
+                                sx={{
+                                    flex: "1 1 180px",
+                                    maxWidth: 220,
+                                    background: "linear-gradient(135deg, #8d6e63 0%, #4e342e 100%)",
+                                    color: "white",
+                                    borderRadius: 3,
+                                    cursor: "pointer",
+                                    transition: "transform 0.18s, box-shadow 0.18s",
+                                    "&:hover": {
+                                        transform: "translateY(-4px) scale(1.03)",
+                                        boxShadow: "0 8px 24px rgba(78,52,46,0.35)",
+                                    },
+                                }}
+                            >
+                                <CardContent sx={{ textAlign: "center", pb: 2 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                        Tea Coupon
+                                    </Typography>
+                                    <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
+                                        {couponData.tea}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
+                                        Click to view details
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+
+                            {/* SNACKS (FS) CARD */}
+                            <Card
+                                onClick={handleFsClick}
+                                sx={{
+                                    flex: "1 1 180px",
+                                    maxWidth: 220,
+                                    background: "linear-gradient(135deg, #26a69a 0%, #00695c 100%)",
+                                    color: "white",
+                                    borderRadius: 3,
+                                    cursor: "pointer",
+                                    transition: "transform 0.18s, box-shadow 0.18s",
+                                    "&:hover": {
+                                        transform: "translateY(-4px) scale(1.03)",
+                                        boxShadow: "0 8px 24px rgba(0,105,92,0.35)",
+                                    },
+                                }}
+                            >
+                                <CardContent sx={{ textAlign: "center", pb: 2 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                        Snacks Coupon (FS)
+                                    </Typography>
+                                    <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
+                                        {couponData.fs}
+                                    </Typography>
+                                    <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
+                                        Click to view details
+                                    </Typography>
+                                </CardContent>
+                            </Card>
+
+                            {/* BS CARD */}
+                            <Card
+                                onClick={handleBsClick}
+                                sx={{
+                                    flex: "1 1 180px",
+                                    maxWidth: 220,
+                                    background: "linear-gradient(135deg, #7e57c2 0%, #4527a0 100%)",
+                                    color: "white",
+                                    borderRadius: 3,
+                                    cursor: "pointer",
+                                    transition: "transform 0.18s, box-shadow 0.18s",
+                                    "&:hover": {
+                                        transform: "translateY(-4px) scale(1.03)",
+                                        boxShadow: "0 8px 24px rgba(69,39,160,0.35)",
+                                    },
+                                }}
+                            >
+                                <CardContent sx={{ textAlign: "center", pb: 2 }}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                                        Beverage & Snacks Coupon
+                                    </Typography>
+                                    <Typography variant="h4" sx={{ fontWeight: "bold", mt: 1 }}>
+                                        {couponData.bs}
                                     </Typography>
                                     <Typography variant="caption" sx={{ opacity: 0.8, mt: 0.5, display: "block" }}>
                                         Click to view details
@@ -443,7 +593,7 @@ export default function UserDashboard() {
                                                 <Table size="small" stickyHeader>
                                                     <TableHead>
                                                         <TableRow>
-                                                            {['Sr.No', 'Employee Code','Employee Name','Employee Type','Zone','Punch Time'].map(col => (
+                                                            {['Sr.No', 'Employee Code', 'Employee Name', 'Employee Type', 'Zone', 'Punch Time'].map(col => (
                                                                 <TableCell
                                                                     key={col}
                                                                     sx={{

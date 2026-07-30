@@ -36,6 +36,7 @@ namespace CanteenManagement.Controllers
             try
             {
                 string firstResponse = await apiConsume.SendRequestAsync(url, HttpMethod.Post, mHeader, null, loginPayload);
+                firstResponse = SanitizeLoginResponse(firstResponse);
 
                 // If password is not provided, we just return the first response
                 if (string.IsNullOrEmpty(request.Password))
@@ -57,6 +58,7 @@ namespace CanteenManagement.Controllers
                     string passwordUrl = ApiService.Canteen + "UserManages/verifypassword";
 
                     string secondResponse = await apiConsume.SendRequestAsync(passwordUrl, HttpMethod.Post, mHeader, null, passwordPayload);
+                    secondResponse = SanitizeLoginResponse(secondResponse);
                     return Content(secondResponse, "application/json");
                 }
                 else
@@ -66,8 +68,70 @@ namespace CanteenManagement.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { statusCode = 2, message = $"Error occurred: {ex.Message}" });
+                string errMsg = ex.Message;
+                if (errMsg.Contains("System.DBNull") || errMsg.Contains("DBNull") || errMsg.Contains("Unable to cast"))
+                {
+                    errMsg = "Incorrect Password.";
+                }
+                return StatusCode(StatusCodes.Status500InternalServerError, new { statusCode = 2, message = $"Error occurred: {errMsg}" });
             }
+        }
+
+        private string SanitizeLoginResponse(string jsonResponse)
+        {
+            if (string.IsNullOrEmpty(jsonResponse)) return jsonResponse;
+            try
+            {
+                if (jsonResponse.Contains("System.DBNull") || jsonResponse.Contains("DBNull") || jsonResponse.Contains("Unable to cast"))
+                {
+                    using (JsonDocument doc = JsonDocument.Parse(jsonResponse))
+                    {
+                        var root = doc.RootElement;
+                        var options = new JsonWriterOptions { Indented = true };
+                        using (var stream = new System.IO.MemoryStream())
+                        {
+                            using (var writer = new Utf8JsonWriter(stream, options))
+                            {
+                                writer.WriteStartObject();
+                                foreach (var prop in root.EnumerateObject())
+                                {
+                                    if (prop.Name.Equals("message", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        writer.WriteString("message", "Incorrect Password.");
+                                    }
+                                    else if (prop.Name.Equals("status", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        writer.WriteBoolean("status", false);
+                                    }
+                                    else if (prop.Name.Equals("statusCode", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        writer.WriteNumber("statusCode", 2);
+                                    }
+                                    else
+                                    {
+                                        prop.WriteTo(writer);
+                                    }
+                                }
+                                writer.WriteEndObject();
+                            }
+                            return System.Text.Encoding.UTF8.GetString(stream.ToArray());
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                if (jsonResponse.Contains("System.DBNull") || jsonResponse.Contains("DBNull") || jsonResponse.Contains("Unable to cast"))
+                {
+                    return JsonSerializer.Serialize(new
+                    {
+                        status = false,
+                        message = "Incorrect Password.",
+                        statusCode = 2
+                    });
+                }
+            }
+            return jsonResponse;
         }
 
         private int GetStatusCode(string jsonResponse)
