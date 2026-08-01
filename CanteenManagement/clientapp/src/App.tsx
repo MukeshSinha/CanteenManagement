@@ -17,6 +17,7 @@ import ContractorDeptWiseSummary from '../Components/ContractorDeptWiseSummary';
 import ContractorCategoryDeptWiseSummary from '../Components/ContractorCategoryDeptWiseSummary';
 import SummarySprlHead from '../Components/SummarySprlHead';
 import UserDashboard from '../Components/UserDashboard';
+import DatewiseTotalMeal from '../Components/DatewiseTotalMeal';
 
 function LogoutAction() {
     sessionStorage.removeItem('isLoggedIn');
@@ -71,6 +72,7 @@ function App() {
                         <Route path="date-wise" element={<DateWiseReport />} />
                         <Route path="contractor-category" element={<ContractorCategory />} />
                         <Route path="Upload-Meal" element={<UploadMeal />} />
+                        <Route path="datewise-total-meal" element={<DatewiseTotalMeal />} />
                     </Route>
 
                     <Route path="summary">

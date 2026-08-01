@@ -15,6 +15,7 @@ import {
     Paper,
     Divider,
     Button,
+    TablePagination,
 } from '@mui/material';
 import {
     Download as DownloadIcon,
@@ -95,22 +96,12 @@ function CanteenDashboard() {
 
     type CouponData = Record<string, number>;
 
-    interface RawPunchRow {
-        empCode: string;
-        empName: string;
-        empType: string;
-        dept: string;
-        att_Date: string;
-        punchTime: string;
-        sft: string;
-    }
-
     interface ModalState {
         open: boolean;
         title: string;
         loading: boolean;
         error: string | null;
-        rows: RawPunchRow[];
+        rows: any[];
     }
 
     const [dashboardData, setDashboardData] = useState<DashboardData>({
@@ -204,7 +195,16 @@ function CanteenDashboard() {
             if (params.category) query.append('category', params.category);
 
             const data = await apiFetch(`Canteen-Dashboard/get-employee-raw-punch?${query.toString()}`);
-            const rows: RawPunchRow[] = data?.dataFetch?.table || [];
+            const rawRows: any[] = data?.dataFetch?.table || [];
+            
+            const rows = rawRows.map((row: any) => {
+                const normalized: any = {};
+                Object.keys(row).forEach(key => {
+                    normalized[key.toLowerCase()] = row[key];
+                });
+                return normalized;
+            });
+
             setModal(prev => ({ ...prev, loading: false, rows }));
         } catch (err: any) {
             setModal(prev => ({ ...prev, loading: false, error: err?.message || 'Failed to load data.' }));
@@ -233,16 +233,20 @@ function CanteenDashboard() {
         setModal({ open: true, title, loading: true, error: null, rows: [] });
 
         try {
-            const data = await apiFetch(endpoint);
-            const rows = (data?.dataFetch?.table || []).map((r: any) => ({
-                empCode: r.empCode || '',
-                empName: r.empName || r.name || '',
-                empType: r.empType || '',
-                dept: r.dept || r.eZone || '',
-                att_Date: r.att_Date || r.punchTime || '',
-                punchTime: r.punchTime || '',
-                sft: r.sft || '-',
-            }));
+            let data = await apiFetch(endpoint);
+            if (typeof data === "string") {
+                data = JSON.parse(data);
+            }
+            const rawRows: any[] = data?.dataFetch?.table || [];
+            
+            const rows = rawRows.map((row: any) => {
+                const normalized: any = {};
+                Object.keys(row).forEach(key => {
+                    normalized[key.toLowerCase()] = row[key];
+                });
+                return normalized;
+            });
+
             setModal(prev => ({ ...prev, loading: false, rows }));
         } catch (err: any) {
             setModal(prev => ({ ...prev, loading: false, error: err?.message || 'Failed to load data.' }));
@@ -259,6 +263,18 @@ function CanteenDashboard() {
 
     const formatDate = (dateStr: string) => {
         if (!dateStr) return '-';
+        if (dateStr.includes('T')) {
+            const parts = dateStr.split('T');
+            const dateParts = parts[0].split('-');
+            if (dateParts.length === 3) {
+                const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                const timeParts = parts[1].split(':');
+                if (timeParts.length >= 2 && parts[1] !== '00:00:00') {
+                    return `${formattedDate} ${timeParts[0]}:${timeParts[1]}`;
+                }
+                return formattedDate;
+            }
+        }
         const d = new Date(dateStr);
         if (isNaN(d.getTime())) return dateStr;
         return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -269,30 +285,65 @@ function CanteenDashboard() {
         return timeStr.split('.')[0];
     };
 
-    const filteredRows = modal.rows.filter(row => {
-        const q = searchText.toLowerCase();
-        return (
-            row.empCode?.toLowerCase().includes(q) ||
-            row.empName?.toLowerCase().includes(q) ||
-            row.dept?.toLowerCase().includes(q) ||
-            row.empType?.toLowerCase().includes(q) ||
-            row.sft?.toLowerCase().includes(q)
-        );
+    const isCouponData = modal.rows.length > 0 && (
+        'tea' in modal.rows[0] || 
+        'snk' in modal.rows[0] || 
+        'bs' in modal.rows[0]
+    );
+
+    const filteredRows = modal.rows.filter((row: any) => {
+        const q = searchText.trim().toLowerCase();
+        if (!q) return true;
+        if (isCouponData) {
+            return (
+                (row.empcode && String(row.empcode).toLowerCase().includes(q)) ||
+                (row.tea !== undefined && String(row.tea).toLowerCase().includes(q)) ||
+                (row.snk !== undefined && String(row.snk).toLowerCase().includes(q)) ||
+                (row.bs !== undefined && String(row.bs).toLowerCase().includes(q)) ||
+                (row.logdt && String(row.logdt).toLowerCase().includes(q)) ||
+                (row.entrydt && String(row.entrydt).toLowerCase().includes(q))
+            );
+        } else {
+            return (
+                (row.empcode && String(row.empcode).toLowerCase().includes(q)) ||
+                (row.empname && String(row.empname).toLowerCase().includes(q)) ||
+                (row.dept && String(row.dept).toLowerCase().includes(q)) ||
+                (row.emptype && String(row.emptype).toLowerCase().includes(q)) ||
+                (row.sft && String(row.sft).toLowerCase().includes(q)) ||
+                (row.punchtime && String(row.punchtime).toLowerCase().includes(q))
+            );
+        }
     });
 
     const exportToCSV = () => {
         if (!filteredRows || filteredRows.length === 0) return;
-        const headers = ["Sr.No", "Emp Code", "Name", "Type", "Department", "Date", "Punch Time", "Shift"];
-        const exportData = filteredRows.map((row, idx) => [
-            idx + 1,
-            `"${String(row.empCode || '').replace(/"/g, '""')}"`,
-            `"${String(row.empName || '').replace(/"/g, '""')}"`,
-            `"${String(row.empType || '').replace(/"/g, '""')}"`,
-            `"${String(row.dept || '').replace(/"/g, '""')}"`,
-            `"${String(formatDate(row.att_Date) || '').replace(/"/g, '""')}"`,
-            `"${String(formatTime(row.punchTime) || '').replace(/"/g, '""')}"`,
-            `"${String(row.sft || '').replace(/"/g, '""')}"`
-        ]);
+        let headers: string[];
+        let exportData: any[];
+
+        if (isCouponData) {
+            headers = ["Sr.No", "Employee Code", "Tea", "Snacks", "Beverage & Snacks", "Log Date", "Entry Date"];
+            exportData = filteredRows.map((row: any, idx) => [
+                idx + 1,
+                `"${String(row.empcode || '').replace(/"/g, '""')}"`,
+                row.tea !== undefined ? row.tea : 0,
+                row.snk !== undefined ? row.snk : 0,
+                row.bs !== undefined ? row.bs : 0,
+                `"${String(formatDate(row.logdt) || '').replace(/"/g, '""')}"`,
+                `"${String(formatDate(row.entrydt) || '').replace(/"/g, '""')}"`
+            ]);
+        } else {
+            headers = ["Sr.No", "Emp Code", "Name", "Type", "Department", "Date", "Punch Time", "Shift"];
+            exportData = filteredRows.map((row, idx) => [
+                idx + 1,
+                `"${String(row.empcode || '').replace(/"/g, '""')}"`,
+                `"${String(row.empname || '').replace(/"/g, '""')}"`,
+                `"${String(row.emptype || '').replace(/"/g, '""')}"`,
+                `"${String(row.dept || '').replace(/"/g, '""')}"`,
+                `"${String(formatDate(row.att_date) || '').replace(/"/g, '""')}"`,
+                `"${String(formatTime(row.punchtime) || '').replace(/"/g, '""')}"`,
+                `"${String(row.sft || '').replace(/"/g, '""')}"`
+            ]);
+        }
 
         const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -302,16 +353,30 @@ function CanteenDashboard() {
 
     const exportToExcel = () => {
         if (!filteredRows || filteredRows.length === 0) return;
-        const dataRows = filteredRows.map((row, idx) => ({
-            "Sr.No": idx + 1,
-            "Emp Code": row.empCode || '',
-            "Name": row.empName || '',
-            "Type": row.empType || '',
-            "Department": row.dept || '',
-            "Date": formatDate(row.att_Date) || '',
-            "Punch Time": formatTime(row.punchTime) || '',
-            "Shift": row.sft || ''
-        }));
+        let dataRows: any[];
+
+        if (isCouponData) {
+            dataRows = filteredRows.map((row: any, idx) => ({
+                "Sr.No": idx + 1,
+                "Employee Code": row.empcode || '',
+                "Tea": row.tea !== undefined ? row.tea : 0,
+                "Snacks": row.snk !== undefined ? row.snk : 0,
+                "Beverage & Snacks": row.bs !== undefined ? row.bs : 0,
+                "Log Date": formatDate(row.logdt),
+                "Entry Date": formatDate(row.entrydt)
+            }));
+        } else {
+            dataRows = filteredRows.map((row, idx) => ({
+                "Sr.No": idx + 1,
+                "Emp Code": row.empcode || '',
+                "Name": row.empname || '',
+                "Type": row.emptype || '',
+                "Department": row.dept || '',
+                "Date": formatDate(row.att_date) || '',
+                "Punch Time": formatTime(row.punchtime) || '',
+                "Shift": row.sft || ''
+            }));
+        }
 
         const ws = XLSX.utils.json_to_sheet(dataRows);
         const wb = XLSX.utils.book_new();
@@ -323,7 +388,15 @@ function CanteenDashboard() {
         saveAs(blob, `${cleanTitle}.xlsx`);
     };
 
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    const handleChangePage = (_event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
     const pagedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     const couponsToRender = Object.keys(couponData)
@@ -711,11 +784,14 @@ function CanteenDashboard() {
                             )}
 
                             {!modal.loading && !modal.error && filteredRows.length > 0 && (
-                                <TableContainer>
+                                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 0, border: 'none' }}>
                                     <Table size="small" stickyHeader>
                                         <TableHead>
                                             <TableRow>
-                                                {['Sr.No', 'Emp Code', 'Name', 'Type', 'Department', 'Date', 'Punch Time', 'Shift'].map(col => (
+                                                {(isCouponData 
+                                                    ? ['Sr.No', 'Employee Code', 'Tea', 'Snacks', 'Beverage & Snacks', 'Log Date', 'Entry Date']
+                                                    : ['Sr.No', 'Emp Code', 'Name', 'Type', 'Department', 'Date', 'Punch Time', 'Shift']
+                                                ).map(col => (
                                                     <TableCell
                                                         key={col}
                                                         sx={{
@@ -732,54 +808,67 @@ function CanteenDashboard() {
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            {pagedRows.map((row, idx) => {
+                                            {pagedRows.map((row: any, idx) => {
                                                 const globalIdx = page * rowsPerPage + idx;
                                                 return (
                                                     <TableRow
-                                                        key={`${row.empCode}-${globalIdx}`}
+                                                        key={`${row.empcode}-${globalIdx}`}
                                                         sx={{
                                                             bgcolor: globalIdx % 2 === 0 ? '#fff' : '#f5f8ff',
                                                             '&:hover': { bgcolor: '#e3f2fd' },
                                                         }}
                                                     >
                                                         <TableCell sx={{ fontSize: 12, color: '#888', minWidth: 36 }}>{globalIdx + 1}</TableCell>
-                                                        <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empCode}</TableCell>
-                                                        <TableCell sx={{ fontSize: 12, whiteSpace: 'nowrap' }}>{row.empName}</TableCell>
-                                                        <TableCell sx={{ fontSize: 12 }}>
-                                                            <Chip
-                                                                label={row.empType}
-                                                                size="small"
-                                                                sx={{
-                                                                    fontSize: 10,
-                                                                    height: 20,
-                                                                    bgcolor:
-                                                                        row.empType === 'STAFF' ? '#e3f2fd' :
-                                                                            row.empType === 'WORKER' ? '#e8f5e9' :
-                                                                                row.empType === 'OFFICER' ? '#fff3e0' :
-                                                                                    row.empType === 'CONT' ? '#fce4ec' : '#f3e5f5',
-                                                                    color:
-                                                                        row.empType === 'STAFF' ? '#1565c0' :
-                                                                            row.empType === 'WORKER' ? '#2e7d32' :
-                                                                                row.empType === 'OFFICER' ? '#e65100' :
-                                                                                    row.empType === 'CONT' ? '#c62828' : '#6a1b9a',
-                                                                }}
-                                                            />
-                                                        </TableCell>
-                                                        <TableCell sx={{ fontSize: 12 }}>{row.dept}</TableCell>
-                                                        <TableCell sx={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatDate(row.att_Date)}</TableCell>
-                                                        <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatTime(row.punchTime)}</TableCell>
-                                                        <TableCell sx={{ fontSize: 12 }}>
-                                                            <Chip
-                                                                label={row.sft || '-'}
-                                                                size="small"
-                                                                sx={{
-                                                                    fontSize: 10,
-                                                                    height: 20,
-                                                                    bgcolor: row.sft === 'A' ? '#e8f5e9' : row.sft === 'G' ? '#fff8e1' : '#f3e5f5',
-                                                                    color: row.sft === 'A' ? '#2e7d32' : row.sft === 'G' ? '#f57f17' : '#6a1b9a',
-                                                                }}
-                                                            />
-                                                        </TableCell>
+                                                        {isCouponData ? (
+                                                            <>
+                                                                <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empcode || '—'}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12 }}>{row.tea !== undefined ? row.tea : 0}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12 }}>{row.snk !== undefined ? row.snk : 0}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12 }}>{row.bs !== undefined ? row.bs : 0}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(row.logdt)}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(row.entrydt)}</TableCell>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empcode || '—'}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12, whiteSpace: 'nowrap' }}>{row.empname || '—'}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12 }}>
+                                                                    <Chip
+                                                                        label={row.emptype || '—'}
+                                                                        size="small"
+                                                                        sx={{
+                                                                            fontSize: 10,
+                                                                            height: 20,
+                                                                            bgcolor:
+                                                                                row.emptype === 'STAFF' ? '#e3f2fd' :
+                                                                                    row.emptype === 'WORKER' ? '#e8f5e9' :
+                                                                                        row.emptype === 'OFFICER' ? '#fff3e0' :
+                                                                                            row.emptype === 'CONT' ? '#fce4ec' : '#f3e5f5',
+                                                                            color:
+                                                                                row.emptype === 'STAFF' ? '#1565c0' :
+                                                                                    row.emptype === 'WORKER' ? '#2e7d32' :
+                                                                                        row.emptype === 'OFFICER' ? '#e65100' :
+                                                                                            row.emptype === 'CONT' ? '#c62828' : '#6a1b9a',
+                                                                        }}
+                                                                    />
+                                                                </TableCell>
+                                                                <TableCell sx={{ fontSize: 12 }}>{row.dept || '—'}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12, whiteSpace: 'nowrap' }}>{formatDate(row.att_date)}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatTime(row.punchtime)}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12 }}>
+                                                                    <Chip
+                                                                        label={row.sft || '-'}
+                                                                        size="small"
+                                                                        sx={{
+                                                                            fontSize: 10,
+                                                                            height: 20,
+                                                                            bgcolor: row.sft === 'A' ? '#e8f5e9' : row.sft === 'G' ? '#fff8e1' : '#f3e5f5',
+                                                                            color: row.sft === 'A' ? '#2e7d32' : row.sft === 'G' ? '#f57f17' : '#6a1b9a',
+                                                                        }}
+                                                                    />
+                                                                </TableCell>
+                                                            </>
+                                                        )}
                                                     </TableRow>
                                                 );
                                             })}
@@ -791,90 +880,15 @@ function CanteenDashboard() {
 
                         {/* Pagination Footer */}
                         {!modal.loading && !modal.error && filteredRows.length > 0 && (
-                            <Box
-                                sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    px: 3,
-                                    py: 1.5,
-                                    borderTop: '1px solid #e0e0e0',
-                                    bgcolor: '#f8f9fa',
-                                    flexWrap: 'wrap',
-                                    gap: 1,
-                                }}
-                            >
-                                {/* Rows per page */}
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Typography fontSize={12} color="text.secondary">Rows per page:</Typography>
-                                    {[50, 100, 200].map(n => (
-                                        <Box
-                                            key={n}
-                                            onClick={() => { setRowsPerPage(n); setPage(0); }}
-                                            sx={{
-                                                px: 1.5,
-                                                py: 0.4,
-                                                borderRadius: 1,
-                                                fontSize: 12,
-                                                cursor: 'pointer',
-                                                fontWeight: rowsPerPage === n ? 700 : 400,
-                                                bgcolor: rowsPerPage === n ? '#1976d2' : '#e0e0e0',
-                                                color: rowsPerPage === n ? '#fff' : '#333',
-                                                transition: 'background 0.15s',
-                                                '&:hover': { bgcolor: rowsPerPage === n ? '#1565c0' : '#bdbdbd' },
-                                            }}
-                                        >
-                                            {n}
-                                        </Box>
-                                    ))}
-                                </Box>
-
-                                {/* Page info */}
-                                <Typography fontSize={12} color="text.secondary">
-                                    {page * rowsPerPage + 1}–{Math.min((page + 1) * rowsPerPage, filteredRows.length)} of {filteredRows.length}
-                                </Typography>
-
-                                {/* Prev / Next */}
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                    <Box
-                                        onClick={() => setPage(p => Math.max(0, p - 1))}
-                                        sx={{
-                                            px: 2,
-                                            py: 0.5,
-                                            borderRadius: 1,
-                                            fontSize: 12,
-                                            cursor: page === 0 ? 'default' : 'pointer',
-                                            bgcolor: page === 0 ? '#f0f0f0' : '#1976d2',
-                                            color: page === 0 ? '#aaa' : '#fff',
-                                            fontWeight: 600,
-                                            transition: 'background 0.15s',
-                                            '&:hover': { bgcolor: page === 0 ? '#f0f0f0' : '#1565c0' },
-                                        }}
-                                    >
-                                        ← Prev
-                                    </Box>
-                                    <Typography fontSize={12} fontWeight={600}>
-                                        Page {page + 1} / {totalPages}
-                                    </Typography>
-                                    <Box
-                                        onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                                        sx={{
-                                            px: 2,
-                                            py: 0.5,
-                                            borderRadius: 1,
-                                            fontSize: 12,
-                                            cursor: page >= totalPages - 1 ? 'default' : 'pointer',
-                                            bgcolor: page >= totalPages - 1 ? '#f0f0f0' : '#1976d2',
-                                            color: page >= totalPages - 1 ? '#aaa' : '#fff',
-                                            fontWeight: 600,
-                                            transition: 'background 0.15s',
-                                            '&:hover': { bgcolor: page >= totalPages - 1 ? '#f0f0f0' : '#1565c0' },
-                                        }}
-                                    >
-                                        Next →
-                                    </Box>
-                                </Box>
-                            </Box>
+                            <TablePagination
+                                rowsPerPageOptions={[50, 100, 200]}
+                                component="div"
+                                count={filteredRows.length}
+                                rowsPerPage={rowsPerPage}
+                                page={page}
+                                onPageChange={handleChangePage}
+                                onRowsPerPageChange={handleChangeRowsPerPage}
+                            />
                         )}
                     </Box>
                 </Box>

@@ -34,11 +34,12 @@ const NavbarComponent: React.FC = () => {
                     fluid
                     className="d-flex align-items-center justify-content-between px-3"
                 >
-                    <div className="header-logo">
-                        <i className="bi bi-cup-hot-fill fs-2"></i>
-                    </div>
-
-                    <h4 className="header-title mb-0">Canteen Management</h4>
+                    <Link to="/" className="d-flex align-items-center gap-3 text-decoration-none text-white">
+                        <div className="header-logo">
+                            <i className="bi bi-cup-hot-fill fs-2"></i>
+                        </div>
+                        <h4 className="header-title mb-0">Canteen Management</h4>
+                    </Link>
 
                     {/* USER PROFILE */}
                     <div
@@ -77,115 +78,126 @@ const NavbarComponent: React.FC = () => {
             </header>
 
             {/* NAVBAR */}
-            {userRole !== "2" && (
-                <Navbar expand="lg" variant="dark" className="main-navbar" sticky="top">
-                    <Container fluid>
+            <Navbar expand="lg" variant="dark" className="main-navbar" sticky="top">
+                <Container fluid>
 
-                        <Navbar.Toggle />
+                    <Navbar.Toggle />
 
-                        <Navbar.Collapse>
-                            <Nav className="me-auto">
-                                {/* MASTERS */}
-                                {userRole === "1" && (
+                    <Navbar.Collapse>
+                        <Nav className="me-auto">
+                            {userRole === "2" ? (
+                                <>
+                                    <Nav.Link as={Link} to="/reports/daily-meal/datewise-total-meal">
+                                        Datewise Total Meal
+                                    </Nav.Link>
+                                </>
+                            ) : (
+                                <>
+                                    {/* MASTERS */}
+                                    {userRole === "1" && (
+                                        <NavDropdown
+                                            title="Masters"
+                                            show={showMasters}
+                                            onMouseEnter={() => setShowMasters(true)}
+                                            onMouseLeave={() => setShowMasters(false)}
+                                            menuVariant="dark"
+                                        >
+                                            <NavDropdown.Item as={Link} to="/masters/employee-configuration">
+                                                Employee Configuration
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/masters/Item-Master">
+                                                Item Master
+                                            </NavDropdown.Item>
+                                        </NavDropdown>
+                                    )}
+
+
+                                    {/* REPORTS */}
                                     <NavDropdown
-                                        title="Masters"
-                                        show={showMasters}
-                                        onMouseEnter={() => setShowMasters(true)}
-                                        onMouseLeave={() => setShowMasters(false)}
+                                        title="Reports"
+                                        show={showReports}
+                                        onMouseEnter={() => setShowReports(true)}
+                                        onMouseLeave={() => setShowReports(false)}
                                         menuVariant="dark"
                                     >
-                                        <NavDropdown.Item as={Link} to="/masters/employee-configuration">
-                                            Employee Configuration
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/masters/Item-Master">
-                                            Item Master
-                                        </NavDropdown.Item>
-                                    </NavDropdown>
-                                )}
 
-
-                                {/* REPORTS */}
-                                <NavDropdown
-                                    title="Reports"
-                                    show={showReports}
-                                    onMouseEnter={() => setShowReports(true)}
-                                    onMouseLeave={() => setShowReports(false)}
-                                    menuVariant="dark"
-                                >
-
-                                    {/* DAILY MEAL */}
-                                    <NavDropdown
-                                        title="Daily Meal"
-                                        drop="end"
-                                        className="dropdown-submenu"
-                                        show={showDailyMeal}
-                                        onMouseEnter={() => setShowDailyMeal(true)}
-                                        onMouseLeave={() => setShowDailyMeal(false)}
-                                    >
-                                        <NavDropdown.Item as={Link} to="/reports/daily-meal/shift-wise">
-                                            Shift Wise
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/reports/daily-meal/date-wise">
-                                            Date Wise
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/reports/daily-meal/contractor-category">
-                                            Contractor Category
-                                        </NavDropdown.Item>
-                                        {userRole === "1" && (
-                                            <NavDropdown.Item as={Link} to="/reports/daily-meal/Upload-Meal">
-                                                Upload Meal
+                                        {/* DAILY MEAL */}
+                                        <NavDropdown
+                                            title="Daily Meal"
+                                            drop="end"
+                                            className="dropdown-submenu"
+                                            show={showDailyMeal}
+                                            onMouseEnter={() => setShowDailyMeal(true)}
+                                            onMouseLeave={() => setShowDailyMeal(false)}
+                                        >
+                                            <NavDropdown.Item as={Link} to="/reports/daily-meal/shift-wise">
+                                                Shift Wise
                                             </NavDropdown.Item>
-                                        )}
+                                            <NavDropdown.Item as={Link} to="/reports/daily-meal/date-wise">
+                                                Date Wise
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/reports/daily-meal/contractor-category">
+                                                Contractor Category
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/reports/daily-meal/datewise-total-meal">
+                                                Datewise Total Meal
+                                            </NavDropdown.Item>
+                                            {userRole === "1" && (
+                                                <NavDropdown.Item as={Link} to="/reports/daily-meal/Upload-Meal">
+                                                    Upload Meal
+                                                </NavDropdown.Item>
+                                            )}
+                                        </NavDropdown>
+
+
+                                        {/* SUMMARY */}
+                                        <NavDropdown
+                                            title="Summary"
+                                            drop="end"
+                                            className="dropdown-submenu"
+                                            show={showSummary}
+                                            onMouseEnter={() => setShowSummary(true)}
+                                            onMouseLeave={() => setShowSummary(false)}
+                                        >
+                                            {/* <NavDropdown.Item as={Link} to="/reports/summary/individual">
+                                                Individual
+                                            </NavDropdown.Item>
+
+                                            <NavDropdown.Item as={Link} to="/reports/summary/contractor-wise">
+                                                Contractor Wise
+                                            </NavDropdown.Item> */}
+
+                                            <NavDropdown.Item as={Link} to="/reports/summary/MonthlyMealSummary">
+                                                Monthly Meal Summary
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/reports/summary/EmployeeRawPunch">
+                                                Employee Raw punch
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/reports/summary/EmployeeContractorCategory">
+                                                Employee Contractor Category Punch
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/reports/summary/ContractorWiseMeal">
+                                                Contractor wise meal summary
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/reports/summary/ContractorDeptWise">
+                                                Contractor and Dept. wise summary
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/reports/summary/ContractorCategoryDeptWise">
+                                                Contractor Category and Dept. wise summary
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/reports/summary/SummarySprlHead">
+                                                Summary SPRL Head
+                                            </NavDropdown.Item>
+                                        </NavDropdown>
+
                                     </NavDropdown>
+                                </>
+                            )}
+                        </Nav>
+                    </Navbar.Collapse>
 
-
-                                    {/* SUMMARY */}
-                                    <NavDropdown
-                                        title="Summary"
-                                        drop="end"
-                                        className="dropdown-submenu"
-                                        show={showSummary}
-                                        onMouseEnter={() => setShowSummary(true)}
-                                        onMouseLeave={() => setShowSummary(false)}
-                                    >
-                                        {/* <NavDropdown.Item as={Link} to="/reports/summary/individual">
-                                            Individual
-                                        </NavDropdown.Item>
-
-                                        <NavDropdown.Item as={Link} to="/reports/summary/contractor-wise">
-                                            Contractor Wise
-                                        </NavDropdown.Item> */}
-
-                                        <NavDropdown.Item as={Link} to="/reports/summary/MonthlyMealSummary">
-                                            Monthly Meal Summary
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/reports/summary/EmployeeRawPunch">
-                                            Employee Raw punch
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/reports/summary/EmployeeContractorCategory">
-                                            Employee Contractor Category Punch
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/reports/summary/ContractorWiseMeal">
-                                            Contractor wise meal summary
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/reports/summary/ContractorDeptWise">
-                                            Contractor and Dept. wise summary
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/reports/summary/ContractorCategoryDeptWise">
-                                            Contractor Category and Dept. wise summary
-                                        </NavDropdown.Item>
-                                        <NavDropdown.Item as={Link} to="/reports/summary/SummarySprlHead">
-                                            Summary SPRL Head
-                                        </NavDropdown.Item>
-                                    </NavDropdown>
-
-                                </NavDropdown>
-                            </Nav>
-                        </Navbar.Collapse>
-
-                    </Container>
-                </Navbar>
-            )}
+                </Container>
+            </Navbar>
         </>
     );
 };

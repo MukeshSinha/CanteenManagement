@@ -194,5 +194,38 @@ namespace CanteenManagement.Controllers
                 throw ex;
             }
         }
+
+        [HttpGet("dateWise-totalMeal")]
+        public async Task<IActionResult> dateWiseTotalMeal(
+            [FromQuery] string? fromdate = null,
+            [FromQuery] string? uptodate = null,
+            [FromQuery] string? category = null,
+            [FromQuery] string? multicategory = null
+            )
+        {
+            try
+            {
+                string url = ApiService.Canteen;
+                if (!string.IsNullOrWhiteSpace(fromdate) || !string.IsNullOrWhiteSpace(uptodate))
+                {
+                    url += $"CanteenPunch/DateWiseTotalMeal?Fromdate={fromdate}&uptodate={uptodate}";
+                    
+                }
+                else
+                {
+                    url += $"CanteenPunch/DateWiseTotalMeal";
+                }
+                var mHeader = _headers.GetHeaders();
+                var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+                return Content(response, "application/json");
+
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+
+        }
     }
 }

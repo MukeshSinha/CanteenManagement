@@ -16,6 +16,7 @@ import {
     TableRow,
     Paper,
     Button,
+    TablePagination,
 } from "@mui/material";
 import {
     Download as DownloadIcon,
@@ -66,21 +67,13 @@ const FALLBACK_GRADIENTS = [
 
 type CouponData = Record<string, number>;
 
-interface PunchRow {
-    empCode: string;
-    punchTime: string;
-    name: string;
-    empType: string;
-    eZone: string;
-    prevPunchTime: string | null;
-}
 
 interface ModalState {
     open: boolean;
     title: string;
     loading: boolean;
     error: string | null;
-    rows: PunchRow[];
+    rows: any[];
 }
 
 export default function UserDashboard() {
@@ -175,8 +168,21 @@ export default function UserDashboard() {
         setModal({ open: true, title, loading: true, error: null, rows: [] });
 
         try {
-            const data = await apiFetch(endpoint);
-            const rows: PunchRow[] = data?.dataFetch?.table || [];
+            let data = await apiFetch(endpoint);
+            if (typeof data === "string") {
+                data = JSON.parse(data);
+            }
+            const rawRows: any[] = data?.dataFetch?.table || [];
+            
+            // Normalize keys to lowercase to prevent casing mismatches
+            const rows = rawRows.map((row: any) => {
+                const normalized: any = {};
+                Object.keys(row).forEach(key => {
+                    normalized[key.toLowerCase()] = row[key];
+                });
+                return normalized;
+            });
+
             setModal(prev => ({ ...prev, loading: false, rows }));
         } catch (err: any) {
             setModal(prev => ({ ...prev, loading: false, error: err?.message || 'Failed to load data.' }));
@@ -204,29 +210,75 @@ export default function UserDashboard() {
         return timeStr.split('.')[0];
     };
 
-    const filteredRows = modal.rows.filter(row => {
-        const q = searchText.toLowerCase();
+    const formatDate = (dateStr: string) => {
+        if (!dateStr) return '-';
+        if (dateStr.includes('T')) {
+            const parts = dateStr.split('T');
+            const dateParts = parts[0].split('-');
+            if (dateParts.length === 3) {
+                const formattedDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                const timeParts = parts[1].split(':');
+                if (timeParts.length >= 2 && parts[1] !== '00:00:00') {
+                    return `${formattedDate} ${timeParts[0]}:${timeParts[1]}`;
+                }
+                return formattedDate;
+            }
+        }
+        return dateStr;
+    };
+
+    const isCouponData = modal.rows.length > 0 && (
+        'tea' in modal.rows[0] || 
+        'snk' in modal.rows[0] || 
+        'bs' in modal.rows[0] ||
+        'empcode' in modal.rows[0]
+    );
+
+    const filteredRows = modal.rows.filter((row: any) => {
+        const q = searchText.trim().toLowerCase();
+        if (!q) return true;
         return (
-            row.empCode?.toLowerCase().includes(q) ||
-            row.name?.toLowerCase().includes(q) ||
-            row.empType?.toLowerCase().includes(q) ||
-            row.eZone?.toLowerCase().includes(q) ||
-            row.punchTime?.toLowerCase().includes(q) ||
-            (row.prevPunchTime && row.prevPunchTime.toLowerCase().includes(q))
+            (row.empcode && String(row.empcode).toLowerCase().includes(q)) ||
+            (row.name && String(row.name).toLowerCase().includes(q)) ||
+            (row.emptype && String(row.emptype).toLowerCase().includes(q)) ||
+            (row.ezone && String(row.ezone).toLowerCase().includes(q)) ||
+            (row.punchtime && String(row.punchtime).toLowerCase().includes(q)) ||
+            (row.prevpunchtime && String(row.prevpunchtime).toLowerCase().includes(q)) ||
+            (row.logdt && String(row.logdt).toLowerCase().includes(q)) ||
+            (row.entrydt && String(row.entrydt).toLowerCase().includes(q)) ||
+            (row.tea !== undefined && String(row.tea).toLowerCase().includes(q)) ||
+            (row.snk !== undefined && String(row.snk).toLowerCase().includes(q)) ||
+            (row.bs !== undefined && String(row.bs).toLowerCase().includes(q))
         );
     });
 
     const exportToCSV = () => {
         if (!filteredRows || filteredRows.length === 0) return;
-        const headers = ["Sr.No", "Employee Code", "Employee Name", "Employee Type", "Zone", "Punch Time"];
-        const exportData = filteredRows.map((row, idx) => [
-            idx + 1,
-            `"${String(row.empCode || '').replace(/"/g, '""')}"`,
-            `"${String(row.name || '').replace(/"/g, '""')}"`,
-            `"${String(row.empType || '').replace(/"/g, '""')}"`,
-            `"${String(row.eZone || '').replace(/"/g, '""')}"`,
-            `"${String(formatTime(row.punchTime) || '').replace(/"/g, '""')}"`
-        ]);
+        let headers: string[];
+        let exportData: any[];
+
+        if (isCouponData) {
+            headers = ["Sr.No", "Employee Code", "Tea", "Snacks", "Beverage & Snacks", "Log Date", "Entry Date"];
+            exportData = filteredRows.map((row: any, idx) => [
+                idx + 1,
+                `"${String(row.empcode || '').replace(/"/g, '""')}"`,
+                row.tea !== undefined ? row.tea : 0,
+                row.snk !== undefined ? row.snk : 0,
+                row.bs !== undefined ? row.bs : 0,
+                `"${String(formatDate(row.logdt) || '').replace(/"/g, '""')}"`,
+                `"${String(formatDate(row.entrydt) || '').replace(/"/g, '""')}"`
+            ]);
+        } else {
+            headers = ["Sr.No", "Employee Code", "Employee Name", "Employee Type", "Zone", "Punch Time"];
+            exportData = filteredRows.map((row, idx) => [
+                idx + 1,
+                `"${String(row.empcode || '').replace(/"/g, '""')}"`,
+                `"${String(row.name || '').replace(/"/g, '""')}"`,
+                `"${String(row.emptype || '').replace(/"/g, '""')}"`,
+                `"${String(row.ezone || '').replace(/"/g, '""')}"`,
+                `"${String(formatTime(row.punchtime) || '').replace(/"/g, '""')}"`
+            ]);
+        }
 
         const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -236,14 +288,28 @@ export default function UserDashboard() {
 
     const exportToExcel = () => {
         if (!filteredRows || filteredRows.length === 0) return;
-        const dataRows = filteredRows.map((row, idx) => ({
-            "Sr.No": idx + 1,
-            "Employee Code": row.empCode || '',
-            "Employee Name": row.name || '',
-            "Employee Type": row.empType || '',
-            "Zone": row.eZone || '',
-            "Punch Time": formatTime(row.punchTime) || ''
-        }));
+        let dataRows: any[];
+
+        if (isCouponData) {
+            dataRows = filteredRows.map((row: any, idx) => ({
+                "Sr.No": idx + 1,
+                "Employee Code": row.empcode || '',
+                "Tea": row.tea !== undefined ? row.tea : 0,
+                "Snacks": row.snk !== undefined ? row.snk : 0,
+                "Beverage & Snacks": row.bs !== undefined ? row.bs : 0,
+                "Log Date": formatDate(row.logdt),
+                "Entry Date": formatDate(row.entrydt)
+            }));
+        } else {
+            dataRows = filteredRows.map((row, idx) => ({
+                "Sr.No": idx + 1,
+                "Employee Code": row.empcode || '',
+                "Employee Name": row.name || '',
+                "Employee Type": row.emptype || '',
+                "Zone": row.ezone || '',
+                "Punch Time": formatTime(row.punchtime) || ''
+            }));
+        }
 
         const ws = XLSX.utils.json_to_sheet(dataRows);
         const wb = XLSX.utils.book_new();
@@ -255,7 +321,15 @@ export default function UserDashboard() {
         saveAs(blob, `${cleanTitle}.xlsx`);
     };
 
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    const handleChangePage = (_event: unknown, newPage: number) => {
+        setPage(newPage);
+    };
+
+    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setRowsPerPage(parseInt(event.target.value, 10));
+        setPage(0);
+    };
+
     const pagedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
     const weeklyTrendData = {
@@ -583,7 +657,10 @@ export default function UserDashboard() {
                                                 <Table size="small" stickyHeader>
                                                     <TableHead>
                                                         <TableRow>
-                                                            {['Sr.No', 'Employee Code', 'Employee Name', 'Employee Type', 'Zone', 'Punch Time'].map(col => (
+                                                            {(isCouponData 
+                                                                ? ['Sr.No', 'Employee Code', 'Tea', 'Snacks', 'Beverage & Snacks', 'Log Date', 'Entry Date']
+                                                                : ['Sr.No', 'Employee Code', 'Employee Name', 'Employee Type', 'Zone', 'Punch Time']
+                                                            ).map(col => (
                                                                 <TableCell
                                                                     key={col}
                                                                     sx={{
@@ -600,22 +677,35 @@ export default function UserDashboard() {
                                                         </TableRow>
                                                     </TableHead>
                                                     <TableBody>
-                                                        {pagedRows.map((row, idx) => {
+                                                        {pagedRows.map((row: any, idx) => {
                                                             const globalIdx = page * rowsPerPage + idx;
                                                             return (
                                                                 <TableRow
-                                                                    key={`${row.empCode}-${globalIdx}`}
+                                                                    key={`${row.empcode}-${globalIdx}`}
                                                                     sx={{
                                                                         bgcolor: globalIdx % 2 === 0 ? '#fff' : '#f5f8ff',
                                                                         '&:hover': { bgcolor: '#e3f2fd' },
                                                                     }}
                                                                 >
                                                                     <TableCell sx={{ fontSize: 12, color: '#888', minWidth: 36 }}>{globalIdx + 1}</TableCell>
-                                                                    <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empCode}</TableCell>
-                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.name}</TableCell>
-                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.empType}</TableCell>
-                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.eZone}</TableCell>
-                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatTime(row.punchTime)}</TableCell>
+                                                                    {isCouponData ? (
+                                                                        <>
+                                                                            <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empcode || '—'}</TableCell>
+                                                                            <TableCell sx={{ fontSize: 12 }}>{row.tea !== undefined ? row.tea : 0}</TableCell>
+                                                                            <TableCell sx={{ fontSize: 12 }}>{row.snk !== undefined ? row.snk : 0}</TableCell>
+                                                                            <TableCell sx={{ fontSize: 12 }}>{row.bs !== undefined ? row.bs : 0}</TableCell>
+                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(row.logdt)}</TableCell>
+                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(row.entrydt)}</TableCell>
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empcode || '—'}</TableCell>
+                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.name || '—'}</TableCell>
+                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.emptype || '—'}</TableCell>
+                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.ezone || '—'}</TableCell>
+                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatTime(row.punchtime)}</TableCell>
+                                                                        </>
+                                                                    )}
                                                                 </TableRow>
                                                             );
                                                         })}
@@ -627,90 +717,15 @@ export default function UserDashboard() {
 
                                     {/* Pagination Footer */}
                                     {!modal.loading && !modal.error && filteredRows.length > 0 && (
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                px: 3,
-                                                py: 1.5,
-                                                borderTop: '1px solid #e0e0e0',
-                                                bgcolor: '#f8f9fa',
-                                                flexWrap: 'wrap',
-                                                gap: 1,
-                                            }}
-                                        >
-                                            {/* Rows per page */}
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Typography fontSize={12} color="text.secondary">Rows per page:</Typography>
-                                                {[50, 100, 200].map(n => (
-                                                    <Box
-                                                        key={n}
-                                                        onClick={() => { setRowsPerPage(n); setPage(0); }}
-                                                        sx={{
-                                                            px: 1.5,
-                                                            py: 0.4,
-                                                            borderRadius: 1,
-                                                            fontSize: 12,
-                                                            cursor: 'pointer',
-                                                            fontWeight: rowsPerPage === n ? 700 : 400,
-                                                            bgcolor: rowsPerPage === n ? '#1976d2' : '#e0e0e0',
-                                                            color: rowsPerPage === n ? '#fff' : '#333',
-                                                            transition: 'background 0.15s',
-                                                            '&:hover': { bgcolor: rowsPerPage === n ? '#1565c0' : '#bdbdbd' },
-                                                        }}
-                                                    >
-                                                        {n}
-                                                    </Box>
-                                                ))}
-                                            </Box>
-
-                                            {/* Page info */}
-                                            <Typography fontSize={12} color="text.secondary">
-                                                {page * rowsPerPage + 1}–{Math.min((page + 1) * rowsPerPage, filteredRows.length)} of {filteredRows.length}
-                                            </Typography>
-
-                                            {/* Prev / Next */}
-                                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                                <Box
-                                                    onClick={() => setPage(p => Math.max(0, p - 1))}
-                                                    sx={{
-                                                        px: 2,
-                                                        py: 0.5,
-                                                        borderRadius: 1,
-                                                        fontSize: 12,
-                                                        cursor: page === 0 ? 'default' : 'pointer',
-                                                        bgcolor: page === 0 ? '#f0f0f0' : '#1976d2',
-                                                        color: page === 0 ? '#aaa' : '#fff',
-                                                        fontWeight: 600,
-                                                        transition: 'background 0.15s',
-                                                        '&:hover': { bgcolor: page === 0 ? '#f0f0f0' : '#1565c0' },
-                                                    }}
-                                                >
-                                                    ← Prev
-                                                </Box>
-                                                <Typography fontSize={12} fontWeight={600}>
-                                                    Page {page + 1} / {totalPages}
-                                                </Typography>
-                                                <Box
-                                                    onClick={() => setPage(p => Math.min(totalPages - 1, p + 1))}
-                                                    sx={{
-                                                        px: 2,
-                                                        py: 0.5,
-                                                        borderRadius: 1,
-                                                        fontSize: 12,
-                                                        cursor: page >= totalPages - 1 ? 'default' : 'pointer',
-                                                        bgcolor: page >= totalPages - 1 ? '#f0f0f0' : '#1976d2',
-                                                        color: page >= totalPages - 1 ? '#aaa' : '#fff',
-                                                        fontWeight: 600,
-                                                        transition: 'background 0.15s',
-                                                        '&:hover': { bgcolor: page >= totalPages - 1 ? '#f0f0f0' : '#1565c0' },
-                                                    }}
-                                                >
-                                                    Next →
-                                                </Box>
-                                            </Box>
-                                        </Box>
+                                        <TablePagination
+                                            rowsPerPageOptions={[50, 100, 200]}
+                                            component="div"
+                                            count={filteredRows.length}
+                                            rowsPerPage={rowsPerPage}
+                                            page={page}
+                                            onPageChange={handleChangePage}
+                                            onRowsPerPageChange={handleChangeRowsPerPage}
+                                        />
                                     )}
                                 </Box>
                             </Box>
