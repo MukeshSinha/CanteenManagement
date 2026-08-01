@@ -653,19 +653,45 @@ function CanteenDashboard() {
                             flexDirection: 'column',
                             boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
                             overflow: 'hidden',
+                            position: 'relative',
                         }}
                     >
+                        {/* Absolutely Positioned Close Button */}
+                        <Box
+                            onClick={closeModal}
+                            sx={{
+                                position: 'absolute',
+                                top: 16,
+                                right: 16,
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                bgcolor: '#e0e0e0',
+                                fontWeight: 700,
+                                fontSize: 18,
+                                color: '#555',
+                                transition: 'background 0.15s',
+                                '&:hover': { bgcolor: '#bdbdbd' },
+                                zIndex: 10,
+                            }}
+                        >
+                            ×
+                        </Box>
+
                         <Box
                             sx={{
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'space-between',
                                 px: 3,
-                                py: 2,
+                                py: 2.5,
                                 borderBottom: '1px solid #e0e0e0',
                                 bgcolor: '#f8f9fa',
-                                flexWrap: 'wrap',
-                                gap: 1.5,
+                                pr: 8, // Reserve space for the close button
                             }}
                         >
                             <Box>
@@ -678,9 +704,35 @@ function CanteenDashboard() {
                                     </Typography>
                                 )}
                             </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-                                {!modal.loading && !modal.error && modal.rows.length > 0 && (
-                                    <>
+                        </Box>
+
+                        <Box sx={{ overflow: 'auto', flex: 1, p: 3 }}>
+                            {!modal.loading && !modal.error && modal.rows.length > 0 && (
+                                <Box
+                                    sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        mb: 3,
+                                        flexWrap: 'wrap',
+                                        gap: 1.5,
+                                    }}
+                                >
+                                    <input
+                                        type="text"
+                                        placeholder="Search..."
+                                        value={searchText}
+                                        onChange={e => { setSearchText(e.target.value); setPage(0); }}
+                                        style={{
+                                            border: '1px solid #d0d7de',
+                                            borderRadius: 8,
+                                            padding: '6px 12px',
+                                            fontSize: 13,
+                                            outline: 'none',
+                                            width: 220,
+                                        }}
+                                    />
+                                    <Box sx={{ display: 'flex', gap: 1.5 }}>
                                         <Button
                                             variant="contained"
                                             color="success"
@@ -714,46 +766,9 @@ function CanteenDashboard() {
                                         >
                                             Export CSV
                                         </Button>
-                                        <input
-                                            type="text"
-                                            placeholder="Search..."
-                                            value={searchText}
-                                            onChange={e => { setSearchText(e.target.value); setPage(0); }}
-                                            style={{
-                                                border: '1px solid #d0d7de',
-                                                borderRadius: 8,
-                                                padding: '6px 12px',
-                                                fontSize: 13,
-                                                outline: 'none',
-                                                width: 150,
-                                            }}
-                                        />
-                                    </>
-                                )}
-                                <Box
-                                    onClick={closeModal}
-                                    sx={{
-                                        width: 32,
-                                        height: 32,
-                                        borderRadius: '50%',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        cursor: 'pointer',
-                                        bgcolor: '#e0e0e0',
-                                        fontWeight: 700,
-                                        fontSize: 18,
-                                        color: '#555',
-                                        transition: 'background 0.15s',
-                                        '&:hover': { bgcolor: '#bdbdbd' },
-                                    }}
-                                >
-                                    ×
+                                    </Box>
                                 </Box>
-                            </Box>
-                        </Box>
-
-                        <Box sx={{ overflow: 'auto', flex: 1, p: 0 }}>
+                            )}
                             {modal.loading && (
                                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, flexDirection: 'column', gap: 2 }}>
                                     <Box
