@@ -463,7 +463,7 @@ export default function UserDashboard() {
                                 alignItems: "flex-start",
                             }}
                         >
-                            {/* LUNCH CARD */}
+                            {/* LUNCH CARDs */}
                             <Card
                                 onClick={handleLunchClick}
                                 sx={{
