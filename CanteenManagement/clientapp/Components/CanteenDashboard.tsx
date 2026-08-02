@@ -102,6 +102,7 @@ function CanteenDashboard() {
         loading: boolean;
         error: string | null;
         rows: any[];
+        type: 'punch' | 'coupon' | '';
     }
 
     const [dashboardData, setDashboardData] = useState<DashboardData>({
@@ -121,6 +122,7 @@ function CanteenDashboard() {
         loading: false,
         error: null,
         rows: [],
+        type: '',
     });
 
     const [searchText, setSearchText] = useState('');
@@ -184,10 +186,10 @@ function CanteenDashboard() {
         return `${yyyy}-${mm}-${dd}`;
     };
 
-    const fetchRawPunch = async (params: { fordate?: string; category?: string }, title: string) => {
+    const fetchRawPunch = async (params: { fordate?: string; category?: string }, title: string, type: 'punch') => {
         setSearchText('');
         setPage(0);
-        setModal({ open: true, title, loading: true, error: null, rows: [] });
+        setModal({ open: true, title, loading: true, error: null, rows: [], type });
 
         try {
             const query = new URLSearchParams();
@@ -212,25 +214,25 @@ function CanteenDashboard() {
     };
 
     const handleTodayPunchClick = () => {
-        fetchRawPunch({ fordate: getTodayDate() }, 'Today Punch Details');
+        fetchRawPunch({ fordate: getTodayDate() }, 'Today Punch Details', 'punch');
     };
 
     const handleContClick = () => {
-        fetchRawPunch({ category: 'CONT', fordate: getTodayDate() }, 'CONT Details');
+        fetchRawPunch({ category: 'CONT', fordate: getTodayDate() }, 'CONT Details', 'punch');
     };
 
     const handleNapsClick = () => {
-        fetchRawPunch({ category: 'Naps', fordate: getTodayDate() }, 'NAPS Details');
+        fetchRawPunch({ category: 'Naps', fordate: getTodayDate() }, 'NAPS Details', 'punch');
     };
 
     const handleFotClick = () => {
-        fetchRawPunch({ category: 'Fot', fordate: getTodayDate() }, 'FOT Details');
+        fetchRawPunch({ category: 'Fot', fordate: getTodayDate() }, 'FOT Details', 'punch');
     };
 
-    const fetchCouponDetails = async (endpoint: string, title: string) => {
+    const fetchCouponDetails = async (endpoint: string, title: string, type: 'coupon') => {
         setSearchText('');
         setPage(0);
-        setModal({ open: true, title, loading: true, error: null, rows: [] });
+        setModal({ open: true, title, loading: true, error: null, rows: [], type });
 
         try {
             let data = await apiFetch(endpoint);
@@ -254,7 +256,7 @@ function CanteenDashboard() {
     };
 
     const handleCouponClick = (endpoint: string, label: string) => {
-        fetchCouponDetails(endpoint, `Today's ${label} Details`);
+        fetchCouponDetails(endpoint, `Today's ${label} Details`, 'coupon');
     };
 
     const closeModal = () => {
@@ -285,11 +287,7 @@ function CanteenDashboard() {
         return timeStr.split('.')[0];
     };
 
-    const isCouponData = modal.rows.length > 0 && (
-        'tea' in modal.rows[0] || 
-        'snk' in modal.rows[0] || 
-        'bs' in modal.rows[0]
-    );
+    const isCouponData = modal.type === 'coupon';
 
     const filteredRows = modal.rows.filter((row: any) => {
         const q = searchText.trim().toLowerCase();

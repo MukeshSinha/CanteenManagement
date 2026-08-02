@@ -68,7 +68,15 @@ const FALLBACK_GRADIENTS = [
 type CouponData = Record<string, number>;
 
 
-interface ModalState {
+interface MealModalState {
+    open: boolean;
+    title: string;
+    loading: boolean;
+    error: string | null;
+    rows: any[];
+}
+
+interface CouponModalState {
     open: boolean;
     title: string;
     loading: boolean;
@@ -90,7 +98,7 @@ export default function UserDashboard() {
         bs: 0,
     });
 
-    const [modal, setModal] = useState<ModalState>({
+    const [mealModal, setMealModal] = useState<MealModalState>({
         open: false,
         title: '',
         loading: false,
@@ -98,9 +106,21 @@ export default function UserDashboard() {
         rows: [],
     });
 
-    const [searchText, setSearchText] = useState('');
-    const [page, setPage] = useState(0);
-    const [rowsPerPage, setRowsPerPage] = useState(100);
+    const [couponModal, setCouponModal] = useState<CouponModalState>({
+        open: false,
+        title: '',
+        loading: false,
+        error: null,
+        rows: [],
+    });
+
+    const [mealSearchText, setMealSearchText] = useState('');
+    const [mealPage, setMealPage] = useState(0);
+    const [mealRowsPerPage, setMealRowsPerPage] = useState(100);
+
+    const [couponSearchText, setCouponSearchText] = useState('');
+    const [couponPage, setCouponPage] = useState(0);
+    const [couponRowsPerPage, setCouponRowsPerPage] = useState(100);
 
     const username = sessionStorage.getItem("loginUser") || "canteen_user";
     const formattedUsername = username
@@ -162,10 +182,10 @@ export default function UserDashboard() {
         fetchCouponData();
     }, []);
 
-    const fetchPunchDetails = async (endpoint: string, title: string) => {
-        setSearchText('');
-        setPage(0);
-        setModal({ open: true, title, loading: true, error: null, rows: [] });
+    const fetchMealDetails = async (endpoint: string, title: string) => {
+        setMealSearchText('');
+        setMealPage(0);
+        setMealModal({ open: true, title, loading: true, error: null, rows: [] });
 
         try {
             let data = await apiFetch(endpoint);
@@ -173,7 +193,7 @@ export default function UserDashboard() {
                 data = JSON.parse(data);
             }
             const rawRows: any[] = data?.dataFetch?.table || [];
-            
+
             // Normalize keys to lowercase to prevent casing mismatches
             const rows = rawRows.map((row: any) => {
                 const normalized: any = {};
@@ -183,26 +203,57 @@ export default function UserDashboard() {
                 return normalized;
             });
 
-            setModal(prev => ({ ...prev, loading: false, rows }));
+            setMealModal(prev => ({ ...prev, loading: false, rows }));
         } catch (err: any) {
-            setModal(prev => ({ ...prev, loading: false, error: err?.message || 'Failed to load data.' }));
+            setMealModal(prev => ({ ...prev, loading: false, error: err?.message || 'Failed to load data.' }));
+        }
+    };
+
+    const fetchCouponDetails = async (endpoint: string, title: string) => {
+        setCouponSearchText('');
+        setCouponPage(0);
+        setCouponModal({ open: true, title, loading: true, error: null, rows: [] });
+
+        try {
+            let data = await apiFetch(endpoint);
+            if (typeof data === "string") {
+                data = JSON.parse(data);
+            }
+            const rawRows: any[] = data?.dataFetch?.table || [];
+
+            // Normalize keys to lowercase to prevent casing mismatches
+            const rows = rawRows.map((row: any) => {
+                const normalized: any = {};
+                Object.keys(row).forEach(key => {
+                    normalized[key.toLowerCase()] = row[key];
+                });
+                return normalized;
+            });
+
+            setCouponModal(prev => ({ ...prev, loading: false, rows }));
+        } catch (err: any) {
+            setCouponModal(prev => ({ ...prev, loading: false, error: err?.message || 'Failed to load data.' }));
         }
     };
 
     const handleLunchClick = () => {
-        fetchPunchDetails('Canteen-Punch/get-todayLunch', "Today's Lunch Punch Details");
+        fetchMealDetails('Canteen-Punch/get-todayLunch', "Today's Lunch Punch Details");
     };
 
     const handleDinnerClick = () => {
-        fetchPunchDetails('Canteen-Punch/get-todayDinner', "Today's Dinner Punch Details");
+        fetchMealDetails('Canteen-Punch/get-todayDinner', "Today's Dinner Punch Details");
     };
 
     const handleCouponClick = (endpoint: string, label: string) => {
-        fetchPunchDetails(endpoint, `Today's ${label} Details`);
+        fetchCouponDetails(endpoint, `Today's ${label} Details`);
     };
 
-    const closeModal = () => {
-        setModal(prev => ({ ...prev, open: false }));
+    const closeMealModal = () => {
+        setMealModal(prev => ({ ...prev, open: false }));
+    };
+
+    const closeCouponModal = () => {
+        setCouponModal(prev => ({ ...prev, open: false }));
     };
 
     const formatTime = (timeStr: string) => {
@@ -227,15 +278,8 @@ export default function UserDashboard() {
         return dateStr;
     };
 
-    const isCouponData = modal.rows.length > 0 && (
-        'tea' in modal.rows[0] || 
-        'snk' in modal.rows[0] || 
-        'bs' in modal.rows[0] ||
-        'empcode' in modal.rows[0]
-    );
-
-    const filteredRows = modal.rows.filter((row: any) => {
-        const q = searchText.trim().toLowerCase();
+    const filteredMealRows = mealModal.rows.filter((row: any) => {
+        const q = mealSearchText.trim().toLowerCase();
         if (!q) return true;
         return (
             (row.empcode && String(row.empcode).toLowerCase().includes(q)) ||
@@ -243,7 +287,15 @@ export default function UserDashboard() {
             (row.emptype && String(row.emptype).toLowerCase().includes(q)) ||
             (row.ezone && String(row.ezone).toLowerCase().includes(q)) ||
             (row.punchtime && String(row.punchtime).toLowerCase().includes(q)) ||
-            (row.prevpunchtime && String(row.prevpunchtime).toLowerCase().includes(q)) ||
+            (row.prevpunchtime && String(row.prevpunchtime).toLowerCase().includes(q))
+        );
+    });
+
+    const filteredCouponRows = couponModal.rows.filter((row: any) => {
+        const q = couponSearchText.trim().toLowerCase();
+        if (!q) return true;
+        return (
+            (row.empcode && String(row.empcode).toLowerCase().includes(q)) ||
             (row.logdt && String(row.logdt).toLowerCase().includes(q)) ||
             (row.entrydt && String(row.entrydt).toLowerCase().includes(q)) ||
             (row.tea !== undefined && String(row.tea).toLowerCase().includes(q)) ||
@@ -252,64 +304,55 @@ export default function UserDashboard() {
         );
     });
 
-    const exportToCSV = () => {
-        if (!filteredRows || filteredRows.length === 0) return;
-        let headers: string[];
-        let exportData: any[];
-
-        if (isCouponData) {
-            headers = ["Sr.No", "Employee Code", "Tea", "Snacks", "Beverage & Snacks", "Log Date", "Entry Date"];
-            exportData = filteredRows.map((row: any, idx) => [
-                idx + 1,
-                `"${String(row.empcode || '').replace(/"/g, '""')}"`,
-                row.tea !== undefined ? row.tea : 0,
-                row.snk !== undefined ? row.snk : 0,
-                row.bs !== undefined ? row.bs : 0,
-                `"${String(formatDate(row.logdt) || '').replace(/"/g, '""')}"`,
-                `"${String(formatDate(row.entrydt) || '').replace(/"/g, '""')}"`
-            ]);
-        } else {
-            headers = ["Sr.No", "Employee Code", "Employee Name", "Employee Type", "Zone", "Punch Time"];
-            exportData = filteredRows.map((row, idx) => [
-                idx + 1,
-                `"${String(row.empcode || '').replace(/"/g, '""')}"`,
-                `"${String(row.name || '').replace(/"/g, '""')}"`,
-                `"${String(row.emptype || '').replace(/"/g, '""')}"`,
-                `"${String(row.ezone || '').replace(/"/g, '""')}"`,
-                `"${String(formatTime(row.punchtime) || '').replace(/"/g, '""')}"`
-            ]);
-        }
+    const exportMealToCSV = () => {
+        if (!filteredMealRows || filteredMealRows.length === 0) return;
+        const headers = ["Sr.No", "Employee Code", "Employee Name", "Employee Type", "Zone", "Punch Time", "Prev Punch Time"];
+        const exportData = filteredMealRows.map((row, idx) => [
+            idx + 1,
+            `"${String(row.empcode || '').replace(/"/g, '""')}"`,
+            `"${String(row.name || '').replace(/"/g, '""')}"`,
+            `"${String(row.emptype || '').replace(/"/g, '""')}"`,
+            `"${String(row.ezone || '').replace(/"/g, '""')}"`,
+            `"${String(formatTime(row.punchtime) || '').replace(/"/g, '""')}"`,
+            `"${String(formatTime(row.prevpunchtime) || '').replace(/"/g, '""')}"`
+        ]);
 
         const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+        const cleanTitle = (mealModal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
         saveAs(blob, `${cleanTitle}.csv`);
     };
 
-    const exportToExcel = () => {
-        if (!filteredRows || filteredRows.length === 0) return;
-        let dataRows: any[];
+    const exportCouponToCSV = () => {
+        if (!filteredCouponRows || filteredCouponRows.length === 0) return;
+        const headers = ["Sr.No", "Employee Code", "Tea", "Snacks", "Beverage & Snacks", "Log Date", "Entry Date"];
+        const exportData = filteredCouponRows.map((row: any, idx) => [
+            idx + 1,
+            `"${String(row.empcode || '').replace(/"/g, '""')}"`,
+            row.tea !== undefined ? row.tea : 0,
+            row.snk !== undefined ? row.snk : 0,
+            row.bs !== undefined ? row.bs : 0,
+            `"${String(formatDate(row.logdt) || '').replace(/"/g, '""')}"`,
+            `"${String(formatDate(row.entrydt) || '').replace(/"/g, '""')}"`
+        ]);
 
-        if (isCouponData) {
-            dataRows = filteredRows.map((row: any, idx) => ({
-                "Sr.No": idx + 1,
-                "Employee Code": row.empcode || '',
-                "Tea": row.tea !== undefined ? row.tea : 0,
-                "Snacks": row.snk !== undefined ? row.snk : 0,
-                "Beverage & Snacks": row.bs !== undefined ? row.bs : 0,
-                "Log Date": formatDate(row.logdt),
-                "Entry Date": formatDate(row.entrydt)
-            }));
-        } else {
-            dataRows = filteredRows.map((row, idx) => ({
-                "Sr.No": idx + 1,
-                "Employee Code": row.empcode || '',
-                "Employee Name": row.name || '',
-                "Employee Type": row.emptype || '',
-                "Zone": row.ezone || '',
-                "Punch Time": formatTime(row.punchtime) || ''
-            }));
-        }
+        const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const cleanTitle = (couponModal.title || 'Coupon_Details').replace(/[^a-zA-Z0-9]/g, '_');
+        saveAs(blob, `${cleanTitle}.csv`);
+    };
+
+    const exportMealToExcel = () => {
+        if (!filteredMealRows || filteredMealRows.length === 0) return;
+        const dataRows = filteredMealRows.map((row, idx) => ({
+            "Sr.No": idx + 1,
+            "Employee Code": row.empcode || '',
+            "Employee Name": row.name || '',
+            "Employee Type": row.emptype || '',
+            "Zone": row.ezone || '',
+            "Punch Time": formatTime(row.punchtime) || '',
+            "Prev Punch Time": formatTime(row.prevpunchtime) || ''
+        }));
 
         const ws = XLSX.utils.json_to_sheet(dataRows);
         const wb = XLSX.utils.book_new();
@@ -317,20 +360,52 @@ export default function UserDashboard() {
 
         const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-        const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+        const cleanTitle = (mealModal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
         saveAs(blob, `${cleanTitle}.xlsx`);
     };
 
-    const handleChangePage = (_event: unknown, newPage: number) => {
-        setPage(newPage);
+    const exportCouponToExcel = () => {
+        if (!filteredCouponRows || filteredCouponRows.length === 0) return;
+        const dataRows = filteredCouponRows.map((row: any, idx) => ({
+            "Sr.No": idx + 1,
+            "Employee Code": row.empcode || '',
+            "Tea": row.tea !== undefined ? row.tea : 0,
+            "Snacks": row.snk !== undefined ? row.snk : 0,
+            "Beverage & Snacks": row.bs !== undefined ? row.bs : 0,
+            "Log Date": formatDate(row.logdt),
+            "Entry Date": formatDate(row.entrydt)
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(dataRows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Details");
+
+        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+        const cleanTitle = (couponModal.title || 'Coupon_Details').replace(/[^a-zA-Z0-9]/g, '_');
+        saveAs(blob, `${cleanTitle}.xlsx`);
     };
 
-    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
+    const handleMealChangePage = (_event: unknown, newPage: number) => {
+        setMealPage(newPage);
     };
 
-    const pagedRows = filteredRows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+    const handleMealChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setMealRowsPerPage(parseInt(event.target.value, 10));
+        setMealPage(0);
+    };
+
+    const handleCouponChangePage = (_event: unknown, newPage: number) => {
+        setCouponPage(newPage);
+    };
+
+    const handleCouponChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setCouponRowsPerPage(parseInt(event.target.value, 10));
+        setCouponPage(0);
+    };
+
+    const pagedMealRows = filteredMealRows.slice(mealPage * mealRowsPerPage, mealPage * mealRowsPerPage + mealRowsPerPage);
+    const pagedCouponRows = filteredCouponRows.slice(couponPage * couponRowsPerPage, couponPage * couponRowsPerPage + couponRowsPerPage);
 
     const weeklyTrendData = {
         days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
@@ -495,10 +570,10 @@ export default function UserDashboard() {
                             ))}
                         </Box>
 
-                        {/* DETAILS MODAL */}
-                        {modal.open && (
+                        {/* MEAL DETAILS MODAL */}
+                        {mealModal.open && (
                             <Box
-                                onClick={closeModal}
+                                onClick={closeMealModal}
                                 sx={{
                                     position: 'fixed',
                                     inset: 0,
@@ -525,9 +600,9 @@ export default function UserDashboard() {
                                         position: 'relative',
                                     }}
                                 >
-                                    {/* Absolutely Positioned Close Button */}
+                                    {/* Close Button */}
                                     <Box
-                                        onClick={closeModal}
+                                        onClick={closeMealModal}
                                         sx={{
                                             position: 'absolute',
                                             top: 16,
@@ -560,23 +635,23 @@ export default function UserDashboard() {
                                             py: 2.5,
                                             borderBottom: '1px solid #e0e0e0',
                                             bgcolor: '#f8f9fa',
-                                            pr: 8, // Reserve space for the close button
+                                            pr: 8,
                                         }}
                                     >
                                         <Box>
                                             <Typography variant="h6" fontWeight={700} color="primary">
-                                                {modal.title}
+                                                {mealModal.title}
                                             </Typography>
-                                            {!modal.loading && !modal.error && (
+                                            {!mealModal.loading && !mealModal.error && (
                                                 <Typography variant="caption" color="text.secondary">
-                                                    {filteredRows.length} of {modal.rows.length} record{modal.rows.length !== 1 ? 's' : ''}
+                                                    {filteredMealRows.length} of {mealModal.rows.length} record{mealModal.rows.length !== 1 ? 's' : ''}
                                                 </Typography>
                                             )}
                                         </Box>
                                     </Box>
 
                                     <Box sx={{ overflow: 'auto', flex: 1, p: 3 }}>
-                                        {!modal.loading && !modal.error && modal.rows.length > 0 && (
+                                        {!mealModal.loading && !mealModal.error && mealModal.rows.length > 0 && (
                                             <Box
                                                 sx={{
                                                     display: 'flex',
@@ -590,8 +665,8 @@ export default function UserDashboard() {
                                                 <input
                                                     type="text"
                                                     placeholder="Search..."
-                                                    value={searchText}
-                                                    onChange={e => { setSearchText(e.target.value); setPage(0); }}
+                                                    value={mealSearchText}
+                                                    onChange={e => { setMealSearchText(e.target.value); setMealPage(0); }}
                                                     style={{
                                                         border: '1px solid #d0d7de',
                                                         borderRadius: 8,
@@ -607,8 +682,8 @@ export default function UserDashboard() {
                                                         color="success"
                                                         size="small"
                                                         startIcon={<DownloadIcon />}
-                                                        onClick={exportToExcel}
-                                                        disabled={filteredRows.length === 0}
+                                                        onClick={exportMealToExcel}
+                                                        disabled={filteredMealRows.length === 0}
                                                         sx={{
                                                             textTransform: 'none',
                                                             fontWeight: 600,
@@ -624,8 +699,8 @@ export default function UserDashboard() {
                                                         color="primary"
                                                         size="small"
                                                         startIcon={<DownloadIcon />}
-                                                        onClick={exportToCSV}
-                                                        disabled={filteredRows.length === 0}
+                                                        onClick={exportMealToCSV}
+                                                        disabled={filteredMealRows.length === 0}
                                                         sx={{
                                                             textTransform: 'none',
                                                             fontWeight: 600,
@@ -638,7 +713,7 @@ export default function UserDashboard() {
                                                 </Box>
                                             </Box>
                                         )}
-                                        {modal.loading && (
+                                        {mealModal.loading && (
                                             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, flexDirection: 'column', gap: 2 }}>
                                                 <Box
                                                     sx={{
@@ -655,27 +730,24 @@ export default function UserDashboard() {
                                             </Box>
                                         )}
 
-                                        {modal.error && (
+                                        {mealModal.error && (
                                             <Box sx={{ p: 4, textAlign: 'center' }}>
-                                                <Typography color="error" fontWeight={600}>{modal.error}</Typography>
+                                                <Typography color="error" fontWeight={600}>{mealModal.error}</Typography>
                                             </Box>
                                         )}
 
-                                        {!modal.loading && !modal.error && modal.rows.length === 0 && (
+                                        {!mealModal.loading && !mealModal.error && mealModal.rows.length === 0 && (
                                             <Box sx={{ p: 4, textAlign: 'center' }}>
                                                 <Typography color="text.secondary">No records found.</Typography>
                                             </Box>
                                         )}
 
-                                        {!modal.loading && !modal.error && filteredRows.length > 0 && (
+                                        {!mealModal.loading && !mealModal.error && mealModal.rows.length > 0 && (
                                             <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 0, border: 'none' }}>
                                                 <Table size="small" stickyHeader>
                                                     <TableHead>
                                                         <TableRow>
-                                                            {(isCouponData 
-                                                                ? ['Sr.No', 'Employee Code', 'Tea', 'Snacks', 'Beverage & Snacks', 'Log Date', 'Entry Date']
-                                                                : ['Sr.No', 'Employee Code', 'Employee Name', 'Employee Type', 'Zone', 'Punch Time']
-                                                            ).map(col => (
+                                                            {['Sr.No', 'Employee Code', 'Employee Name', 'Employee Type', 'Zone', 'Punch Time', 'Prev Punch Time'].map(col => (
                                                                 <TableCell
                                                                     key={col}
                                                                     sx={{
@@ -692,8 +764,8 @@ export default function UserDashboard() {
                                                         </TableRow>
                                                     </TableHead>
                                                     <TableBody>
-                                                        {pagedRows.map((row: any, idx) => {
-                                                            const globalIdx = page * rowsPerPage + idx;
+                                                        {pagedMealRows.map((row: any, idx) => {
+                                                            const globalIdx = mealPage * mealRowsPerPage + idx;
                                                             return (
                                                                 <TableRow
                                                                     key={`${row.empcode}-${globalIdx}`}
@@ -703,24 +775,12 @@ export default function UserDashboard() {
                                                                     }}
                                                                 >
                                                                     <TableCell sx={{ fontSize: 12, color: '#888', minWidth: 36 }}>{globalIdx + 1}</TableCell>
-                                                                    {isCouponData ? (
-                                                                        <>
-                                                                            <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empcode || '—'}</TableCell>
-                                                                            <TableCell sx={{ fontSize: 12 }}>{row.tea !== undefined ? row.tea : 0}</TableCell>
-                                                                            <TableCell sx={{ fontSize: 12 }}>{row.snk !== undefined ? row.snk : 0}</TableCell>
-                                                                            <TableCell sx={{ fontSize: 12 }}>{row.bs !== undefined ? row.bs : 0}</TableCell>
-                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(row.logdt)}</TableCell>
-                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(row.entrydt)}</TableCell>
-                                                                        </>
-                                                                    ) : (
-                                                                        <>
-                                                                            <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empcode || '—'}</TableCell>
-                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.name || '—'}</TableCell>
-                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.emptype || '—'}</TableCell>
-                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.ezone || '—'}</TableCell>
-                                                                            <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatTime(row.punchtime)}</TableCell>
-                                                                        </>
-                                                                    )}
+                                                                    <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empcode || '—'}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.name || '—'}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.emptype || '—'}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{row.ezone || '—'}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatTime(row.punchtime)}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatTime(row.prevpunchtime)}</TableCell>
                                                                 </TableRow>
                                                             );
                                                         })}
@@ -731,15 +791,251 @@ export default function UserDashboard() {
                                     </Box>
 
                                     {/* Pagination Footer */}
-                                    {!modal.loading && !modal.error && filteredRows.length > 0 && (
+                                    {!mealModal.loading && !mealModal.error && filteredMealRows.length > 0 && (
                                         <TablePagination
                                             rowsPerPageOptions={[50, 100, 200]}
                                             component="div"
-                                            count={filteredRows.length}
-                                            rowsPerPage={rowsPerPage}
-                                            page={page}
-                                            onPageChange={handleChangePage}
-                                            onRowsPerPageChange={handleChangeRowsPerPage}
+                                            count={filteredMealRows.length}
+                                            rowsPerPage={mealRowsPerPage}
+                                            page={mealPage}
+                                            onPageChange={handleMealChangePage}
+                                            onRowsPerPageChange={handleMealChangeRowsPerPage}
+                                        />
+                                    )}
+                                </Box>
+                            </Box>
+                        )}
+
+                        {/* COUPON DETAILS MODAL */}
+                        {couponModal.open && (
+                            <Box
+                                onClick={closeCouponModal}
+                                sx={{
+                                    position: 'fixed',
+                                    inset: 0,
+                                    bgcolor: 'rgba(0,0,0,0.55)',
+                                    zIndex: 1300,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    p: 2,
+                                }}
+                            >
+                                <Box
+                                    onClick={e => e.stopPropagation()}
+                                    sx={{
+                                        bgcolor: '#fff',
+                                        borderRadius: 3,
+                                        width: '100%',
+                                        maxWidth: 850,
+                                        maxHeight: '85vh',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        boxShadow: '0 24px 64px rgba(0,0,0,0.22)',
+                                        overflow: 'hidden',
+                                        position: 'relative',
+                                    }}
+                                >
+                                    {/* Close Button */}
+                                    <Box
+                                        onClick={closeCouponModal}
+                                        sx={{
+                                            position: 'absolute',
+                                            top: 16,
+                                            right: 16,
+                                            width: 32,
+                                            height: 32,
+                                            borderRadius: '50%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer',
+                                            bgcolor: '#e0e0e0',
+                                            fontWeight: 700,
+                                            fontSize: 18,
+                                            color: '#555',
+                                            transition: 'background 0.15s',
+                                            '&:hover': { bgcolor: '#bdbdbd' },
+                                            zIndex: 10,
+                                        }}
+                                    >
+                                        ×
+                                    </Box>
+
+                                    <Box
+                                        sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            px: 3,
+                                            py: 2.5,
+                                            borderBottom: '1px solid #e0e0e0',
+                                            bgcolor: '#f8f9fa',
+                                            pr: 8,
+                                        }}
+                                    >
+                                        <Box>
+                                            <Typography variant="h6" fontWeight={700} color="primary">
+                                                {couponModal.title}
+                                            </Typography>
+                                            {!couponModal.loading && !couponModal.error && (
+                                                <Typography variant="caption" color="text.secondary">
+                                                    {filteredCouponRows.length} of {couponModal.rows.length} record{couponModal.rows.length !== 1 ? 's' : ''}
+                                                </Typography>
+                                            )}
+                                        </Box>
+                                    </Box>
+
+                                    <Box sx={{ overflow: 'auto', flex: 1, p: 3 }}>
+                                        {!couponModal.loading && !couponModal.error && couponModal.rows.length > 0 && (
+                                            <Box
+                                                sx={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'space-between',
+                                                    mb: 3,
+                                                    flexWrap: 'wrap',
+                                                    gap: 1.5,
+                                                }}
+                                            >
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search..."
+                                                    value={couponSearchText}
+                                                    onChange={e => { setCouponSearchText(e.target.value); setCouponPage(0); }}
+                                                    style={{
+                                                        border: '1px solid #d0d7de',
+                                                        borderRadius: 8,
+                                                        padding: '6px 12px',
+                                                        fontSize: 13,
+                                                        outline: 'none',
+                                                        width: 220,
+                                                    }}
+                                                />
+                                                <Box sx={{ display: 'flex', gap: 1.5 }}>
+                                                    <Button
+                                                        variant="contained"
+                                                        color="success"
+                                                        size="small"
+                                                        startIcon={<DownloadIcon />}
+                                                        onClick={exportCouponToExcel}
+                                                        disabled={filteredCouponRows.length === 0}
+                                                        sx={{
+                                                            textTransform: 'none',
+                                                            fontWeight: 600,
+                                                            fontSize: 12,
+                                                            borderRadius: 1.5,
+                                                            boxShadow: '0 2px 6px rgba(46,125,50,0.2)',
+                                                        }}
+                                                    >
+                                                        Export Excel
+                                                    </Button>
+                                                    <Button
+                                                        variant="outlined"
+                                                        color="primary"
+                                                        size="small"
+                                                        startIcon={<DownloadIcon />}
+                                                        onClick={exportCouponToCSV}
+                                                        disabled={filteredCouponRows.length === 0}
+                                                        sx={{
+                                                            textTransform: 'none',
+                                                            fontWeight: 600,
+                                                            fontSize: 12,
+                                                            borderRadius: 1.5,
+                                                        }}
+                                                    >
+                                                        Export CSV
+                                                    </Button>
+                                                </Box>
+                                            </Box>
+                                        )}
+                                        {couponModal.loading && (
+                                            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8, flexDirection: 'column', gap: 2 }}>
+                                                <Box
+                                                    sx={{
+                                                        width: 44,
+                                                        height: 44,
+                                                        border: '4px solid #e3f2fd',
+                                                        borderTop: '4px solid #1976d2',
+                                                        borderRadius: '50%',
+                                                        animation: 'spin 0.9s linear infinite',
+                                                        '@keyframes spin': { '100%': { transform: 'rotate(360deg)' } },
+                                                    }}
+                                                />
+                                                <Typography color="text.secondary" fontSize={14}>Loading data...</Typography>
+                                            </Box>
+                                        )}
+
+                                        {couponModal.error && (
+                                            <Box sx={{ p: 4, textAlign: 'center' }}>
+                                                <Typography color="error" fontWeight={600}>{couponModal.error}</Typography>
+                                            </Box>
+                                        )}
+
+                                        {!couponModal.loading && !couponModal.error && couponModal.rows.length === 0 && (
+                                            <Box sx={{ p: 4, textAlign: 'center' }}>
+                                                <Typography color="text.secondary">No records found.</Typography>
+                                            </Box>
+                                        )}
+
+                                        {!couponModal.loading && !couponModal.error && couponModal.rows.length > 0 && (
+                                            <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 0, border: 'none' }}>
+                                                <Table size="small" stickyHeader>
+                                                    <TableHead>
+                                                        <TableRow>
+                                                            {['Sr.No', 'Employee Code', 'Tea', 'Snacks', 'Beverage & Snacks', 'Log Date', 'Entry Date'].map(col => (
+                                                                <TableCell
+                                                                    key={col}
+                                                                    sx={{
+                                                                        fontWeight: 700,
+                                                                        bgcolor: '#1976d2',
+                                                                        color: '#fff',
+                                                                        whiteSpace: 'nowrap',
+                                                                        fontSize: 12,
+                                                                    }}
+                                                                >
+                                                                    {col}
+                                                                </TableCell>
+                                                            ))}
+                                                        </TableRow>
+                                                    </TableHead>
+                                                    <TableBody>
+                                                        {pagedCouponRows.map((row: any, idx) => {
+                                                            const globalIdx = couponPage * couponRowsPerPage + idx;
+                                                            return (
+                                                                <TableRow
+                                                                    key={`${row.empcode}-${globalIdx}`}
+                                                                    sx={{
+                                                                        bgcolor: globalIdx % 2 === 0 ? '#fff' : '#f5f8ff',
+                                                                        '&:hover': { bgcolor: '#e3f2fd' },
+                                                                    }}
+                                                                >
+                                                                    <TableCell sx={{ fontSize: 12, color: '#888', minWidth: 36 }}>{globalIdx + 1}</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empcode || '—'}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12 }}>{row.tea !== undefined ? row.tea : 0}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12 }}>{row.snk !== undefined ? row.snk : 0}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12 }}>{row.bs !== undefined ? row.bs : 0}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(row.logdt)}</TableCell>
+                                                                    <TableCell sx={{ fontSize: 12, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>{formatDate(row.entrydt)}</TableCell>
+                                                                </TableRow>
+                                                            );
+                                                        })}
+                                                    </TableBody>
+                                                </Table>
+                                            </TableContainer>
+                                        )}
+                                    </Box>
+
+                                    {/* Pagination Footer */}
+                                    {!couponModal.loading && !couponModal.error && filteredCouponRows.length > 0 && (
+                                        <TablePagination
+                                            rowsPerPageOptions={[50, 100, 200]}
+                                            component="div"
+                                            count={filteredCouponRows.length}
+                                            rowsPerPage={couponRowsPerPage}
+                                            page={couponPage}
+                                            onPageChange={handleCouponChangePage}
+                                            onRowsPerPageChange={handleCouponChangeRowsPerPage}
                                         />
                                     )}
                                 </Box>
