@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import "./Login.css";
 import { apiFetch } from "../src/utils/api";
@@ -8,6 +9,7 @@ const Password: React.FC = () => {
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [shakeCard, setShakeCard] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     const username = sessionStorage.getItem("loginUser") || "";
@@ -38,6 +40,9 @@ const Password: React.FC = () => {
         e.preventDefault();
 
         const trimmedPassword = password.trim();
+        if (!trimmedPassword || loading) return;
+
+        setLoading(true);
 
         try {
             const res = await apiFetch("Login/login", {
@@ -87,18 +92,21 @@ const Password: React.FC = () => {
                 sessionStorage.removeItem("tempRole");
 
                 if (roleStr === "1") {
+                    toast.success("Welcome Admin! Logged in successfully");
                     Toast.fire({
                         icon: "success",
                         title: "Welcome Admin! Logged in successfully"
                     });
                     navigate("/canteen-dashboard", { replace: true });
                 } else if (roleStr === "2") {
+                    toast.success("Welcome User! Logged in successfully");
                     Toast.fire({
                         icon: "success",
                         title: "Welcome User! Logged in successfully"
                     });
                     navigate("/user-dashboard", { replace: true });
                 } else {
+                    toast.success("Welcome! Logged in successfully");
                     Toast.fire({
                         icon: "success",
                         title: "Welcome! Logged in successfully"
@@ -109,19 +117,24 @@ const Password: React.FC = () => {
                 setShakeCard(true);
                 setTimeout(() => setShakeCard(false), 500);
 
+                const errorMsg = data?.message || "Please check your Password";
+                toast.error(errorMsg);
                 Toast.fire({
                     icon: "error",
-                    title: data?.message || "Please check your Password"
+                    title: errorMsg
                 });
             }
         } catch (err) {
             console.error(err);
             setShakeCard(true);
             setTimeout(() => setShakeCard(false), 500);
+            toast.error("Failed to connect to server");
             Toast.fire({
                 icon: "error",
                 title: "Failed to connect to server"
             });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -153,6 +166,7 @@ const Password: React.FC = () => {
                             onChange={(e) => setPassword(e.target.value)}
                             required
                             autoFocus
+                            disabled={loading}
                         />
                         <i className="bi bi-shield-lock-fill input-icon-left"></i>
                         <label htmlFor="password">Password</label>
@@ -162,20 +176,30 @@ const Password: React.FC = () => {
                             className="password-toggle-btn"
                             onClick={() => setShowPassword(!showPassword)}
                             aria-label={showPassword ? "Hide password" : "Show password"}
+                            disabled={loading}
                         >
                             <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`}></i>
                         </button>
                     </div>
 
-                    <button type="submit" className="glow-btn">
-                        <span>Sign In</span>
-                        <i className="bi bi-box-arrow-in-right"></i>
+                    <button type="submit" className="glow-btn" disabled={loading}>
+                        {loading ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Signing in...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span>Sign In</span>
+                                <i className="bi bi-box-arrow-in-right"></i>
+                            </>
+                        )}
                     </button>
                 </form>
 
                 <div 
                     className="back-link align-self-center"
-                    onClick={() => navigate("/login")}
+                    onClick={() => !loading && navigate("/login")}
                 >
                     <i className="bi bi-chevron-left"></i>
                     <span>Sign in with a different user</span>

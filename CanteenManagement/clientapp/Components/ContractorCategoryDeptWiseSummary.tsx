@@ -28,6 +28,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { apiFetch } from '../src/utils/api';
 import Swal from 'sweetalert2';
+import DataNotFound from './Common/DataNotFound';
 
 const columnHeaderMap: Record<string, string> = {
     ezone: "Contractor Name",
@@ -591,8 +592,17 @@ const ContractorCategoryDeptWiseSummary: React.FC = () => {
             )}
 
             {showReport && (
-                <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-                    <CardContent sx={{ p: 0 }}>
+                <>
+                    {loading ? (
+                        <Card sx={{ borderRadius: 3, p: 4, textAlign: 'center', my: 3 }}>
+                            <CircularProgress size={36} sx={{ mb: 2 }} />
+                            <Typography variant="body1" color="text.secondary">Fetching contractor category report data...</Typography>
+                        </Card>
+                    ) : filteredRows.length === 0 ? (
+                        <DataNotFound />
+                    ) : (
+                        <Card sx={{ borderRadius: 3, boxShadow: '0 4px 12px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                            <CardContent sx={{ p: 0 }}>
                         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2} sx={{ p: 2, borderBottom: '1px solid #e0e0e0' }}>
                             <TextField
                                 placeholder="Search..."
@@ -659,28 +669,7 @@ const ContractorCategoryDeptWiseSummary: React.FC = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {loading ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={reportColumns.length + 2 || 13}
-                                                align="center"
-                                                sx={{ py: 8 }}
-                                            >
-                                                <CircularProgress />
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : filteredRows.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={reportColumns.length + 2 || 13}
-                                                align="center"
-                                                sx={{ py: 6, color: 'text.secondary' }}
-                                            >
-                                                No records found
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        <>
+                                    {/* Grouped Rows */}
                                             {/* Grouped Rows */}
                                             {(() => {
                                                 const grouped = getGroupedRows(filteredRows);
@@ -805,14 +794,14 @@ const ContractorCategoryDeptWiseSummary: React.FC = () => {
                                                     </TableCell>
                                                 ))}
                                             </TableRow>
-                                        </>
-                                    )}
                                 </TableBody>
                             </Table>
                         </TableContainer>
                     </CardContent>
                 </Card>
             )}
+        </>
+    )}
         </Box>
     );
 };

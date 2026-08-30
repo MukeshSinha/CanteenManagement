@@ -23,6 +23,7 @@ import {
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import { apiFetch } from '../src/utils/api';
 
@@ -58,14 +59,17 @@ const saveItemMaster = async (payload: ItemRequest): Promise<boolean> => {
         console.log("saveItemMaster response:", data);
 
         if (data?.statusCode === 1) {
+            toast.success('Item saved successfully!');
             await Swal.fire({ icon: 'success', title: 'Saved!', text: 'Item saved successfully', timer: 2000 });
             return true;
         } else {
+            toast.error(data?.message || 'Failed to save');
             await Swal.fire({ icon: 'error', title: 'Error', text: data?.message || 'Failed to save' });
             return false;
         }
     } catch (err) {
         console.error(err);
+        toast.error('Failed to save item');
         await Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save item' });
         return false;
     }
@@ -111,15 +115,18 @@ const updateItemMaster = async (payload: ItemRequest): Promise<boolean> => {
         });
         const data = typeof res === 'string' ? JSON.parse(res) : res;
         if (data?.statusCode == 1) {
+            toast.success('Rate updated successfully!');
             await Swal.fire({ icon: 'success', title: 'Updated!', text: 'Rate updated successfully', timer: 2000 });
             return true;
         }
         else {
+            toast.error(res?.message || 'Failed to update rate');
             await Swal.fire({ icon: 'error', title: 'Error', text: res?.message || 'Failed to update rate' });
             return false;
         }
     } catch (err) {
         console.error(err);
+        toast.error('Failed to update rate');
         await Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to update rate' });
         return false;
     }
@@ -151,10 +158,12 @@ const deleteItemMaster = async (itemCode: number): Promise<boolean> => {
     try {
         const res = await apiFetch(`ItemMaster/${itemCode}`, { method: 'DELETE' });
         if (!res.ok) throw new Error('Delete failed');
+        toast.success('Item deleted successfully!');
         await Swal.fire({ icon: 'success', title: 'Deleted!', text: 'Item deleted successfully', timer: 2000 });
         return true;
     } catch (err) {
         console.error(err);
+        toast.error('Failed to delete item');
         await Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to delete item' });
         return false;
     }
@@ -310,34 +319,44 @@ const ItemMaster = () => {
 
     // Export functions
     const exportToCSV = () => {
-        const headers = ['Item Code', 'Item Name', 'Item Type', 'Rate', 'WEF Date'];
-        const rows = allItems.map(item => [
-            item.itemCode,
-            `"${item.itemName.replace(/"/g, '""')}"`,
-            getItemTypeLabel(item.itemType),
-            item?.rate?.rate ?? '',
-            item?.rate?.wefDate ?? '',
-        ]);
-        const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = 'ItemMaster.csv';
-        link.click();
+        try {
+            const headers = ['Item Code', 'Item Name', 'Item Type', 'Rate', 'WEF Date'];
+            const rows = allItems.map(item => [
+                item.itemCode,
+                `"${item.itemName.replace(/"/g, '""')}"`,
+                getItemTypeLabel(item.itemType),
+                item?.rate?.rate ?? '',
+                item?.rate?.wefDate ?? '',
+            ]);
+            const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'ItemMaster.csv';
+            link.click();
+            toast.success('Item Master CSV downloaded!');
+        } catch (err) {
+            toast.error('Failed to export CSV');
+        }
     };
 
     const exportToExcel = () => {
-        const data = allItems.map(item => ({
-            'Item Code': item.itemCode,
-            'Item Name': item.itemName,
-            'Item Type': getItemTypeLabel(item.itemType),
-            'Rate': item?.rate?.rate ?? '',
-            'WEF Date': item?.rate?.wefDate ?? '',
-        }));
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Item Master');
-        XLSX.writeFile(wb, 'ItemMaster.xlsx');
+        try {
+            const data = allItems.map(item => ({
+                'Item Code': item.itemCode,
+                'Item Name': item.itemName,
+                'Item Type': getItemTypeLabel(item.itemType),
+                'Rate': item?.rate?.rate ?? '',
+                'WEF Date': item?.rate?.wefDate ?? '',
+            }));
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Item Master');
+            XLSX.writeFile(wb, 'ItemMaster.xlsx');
+            toast.success('Item Master Excel downloaded!');
+        } catch (err) {
+            toast.error('Failed to export Excel');
+        }
     };
 
     return (

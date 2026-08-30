@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import NavbarComponent from '../Components/Navbar/NavbarComponent';
 import CanteenDashboard from '../Components/CanteenDashboard';
 import ShiftWiseReport from '../Components/ShiftWiseReport';
@@ -16,24 +16,20 @@ import ContractorWiseMealSummary from '../Components/ContractorWiseMealSummary';
 import ContractorDeptWiseSummary from '../Components/ContractorDeptWiseSummary';
 import ContractorCategoryDeptWiseSummary from '../Components/ContractorCategoryDeptWiseSummary';
 import SummarySprlHead from '../Components/SummarySprlHead';
+import MachineWisePunch from '../Components/MachineWisePunch';
 import UserDashboard from '../Components/UserDashboard';
 import DatewiseTotalMeal from '../Components/DatewiseTotalMeal';
 
 function LogoutAction() {
-    sessionStorage.removeItem('isLoggedIn');
-    sessionStorage.removeItem('loginUser');
+    sessionStorage.clear();
     return <Navigate to="/login" replace />;
 }
 
 function App() {
     const location = useLocation();
-    const [isLoggedIn, setIsLoggedIn] = useState(sessionStorage.getItem('isLoggedIn') === 'true');
 
-    useEffect(() => {
-        // Keep login state synchronized with sessionStorage on route change
-        setIsLoggedIn(sessionStorage.getItem('isLoggedIn') === 'true');
-    }, [location]);
-
+    // Check login state synchronously from sessionStorage on every render
+    const isLoggedIn = sessionStorage.getItem('isLoggedIn') === 'true';
     const isAuthPage = location.pathname === '/login' || location.pathname === '/password';
     const userRole = sessionStorage.getItem('userRole');
 
@@ -49,6 +45,32 @@ function App() {
 
     return (
         <>
+            <Toaster 
+                position="top-right" 
+                toastOptions={{
+                    duration: 3500,
+                    style: {
+                        background: '#1e293b',
+                        color: '#fff',
+                        borderRadius: '12px',
+                        fontSize: '14px',
+                        padding: '12px 18px',
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)',
+                    },
+                    success: {
+                        iconTheme: {
+                            primary: '#10b981',
+                            secondary: '#fff',
+                        },
+                    },
+                    error: {
+                        iconTheme: {
+                            primary: '#ef4444',
+                            secondary: '#fff',
+                        },
+                    },
+                }}
+            />
             {/* Show Navigation only if NOT on login/password pages */}
             {!isAuthPage && <NavbarComponent />}
 
@@ -83,6 +105,7 @@ function App() {
                         <Route path="ContractorDeptWise" element={<ContractorDeptWiseSummary />} />
                         <Route path="ContractorCategoryDeptWise" element={<ContractorCategoryDeptWiseSummary />} />
                         <Route path="SummarySprlHead" element={<SummarySprlHead />} />
+                        <Route path="MachineWisePunch" element={<MachineWisePunch />} />
                     </Route>
                 </Route>
 
@@ -94,4 +117,3 @@ function App() {
 }
 
 export default App;
-

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import "./Login.css";
 import { apiFetch } from "../src/utils/api";
@@ -7,6 +8,7 @@ import { apiFetch } from "../src/utils/api";
 const Login: React.FC = () => {
     const [username, setUsername] = useState("");
     const [shakeCard, setShakeCard] = useState(false);
+    const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
     // SweetAlert2 Toast configuration
@@ -28,7 +30,9 @@ const Login: React.FC = () => {
         e.preventDefault();
 
         const trimmedUser = username.trim();
-        if (!trimmedUser) return;
+        if (!trimmedUser || loading) return;
+
+        setLoading(true);
 
         try {
             const res = await apiFetch("Login/login", {
@@ -69,20 +73,25 @@ const Login: React.FC = () => {
                 setShakeCard(true);
                 setTimeout(() => setShakeCard(false), 500);
 
+                const errorMsg = data?.message || "Please check user login";
+                toast.error(errorMsg);
                 // Display beautiful SweetAlert2 Toast error
                 Toast.fire({
                     icon: "error",
-                    title: data?.message || "Please check user login"
+                    title: errorMsg
                 });
             }
         } catch (err) {
             console.error(err);
             setShakeCard(true);
             setTimeout(() => setShakeCard(false), 500);
+            toast.error("Failed to connect to server");
             Toast.fire({
                 icon: "error",
                 title: "Failed to connect to server"
             });
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -109,14 +118,24 @@ const Login: React.FC = () => {
                             required
                             autoFocus
                             autoComplete="off"
+                            disabled={loading}
                         />
                         <i className="bi bi-person-fill input-icon-left"></i>
                         <label htmlFor="username">Username / Login ID</label>
                     </div>
 
-                    <button type="submit" className="glow-btn">
-                        <span>Continue</span>
-                        <i className="bi bi-arrow-right"></i>
+                    <button type="submit" className="glow-btn" disabled={loading}>
+                        {loading ? (
+                            <>
+                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Verifying...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span>Continue</span>
+                                <i className="bi bi-arrow-right"></i>
+                            </>
+                        )}
                     </button>
                 </form>
             </div>

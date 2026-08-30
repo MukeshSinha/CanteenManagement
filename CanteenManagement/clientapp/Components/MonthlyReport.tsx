@@ -28,6 +28,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { apiFetch } from '../src/utils/api';
 import Swal from 'sweetalert2';
+import DataNotFound from './Common/DataNotFound';
 
 
 
@@ -419,128 +420,115 @@ const MonthlyReport: React.FC = () => {
             </Card>
 
             {showReport && (
-                <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-                    <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ mb: 3, p: 2, bgcolor: '#e3f2fd', borderRadius: 2, borderLeft: '5px solid #1976d2' }}>
-                            <Stack direction="row" spacing={4} flexWrap="wrap">
-                                <div>
-                                    <Typography variant="caption" color="text.secondary">From</Typography>
-                                    <Typography fontWeight="bold" sx={{ color: '#0d47a1' }}>{fromDate || '—'}</Typography>
-                                </div>
-                                <div>
-                                    <Typography variant="caption" color="text.secondary">To</Typography>
-                                    <Typography fontWeight="bold" sx={{ color: '#0d47a1' }}>{upToDate || '—'}</Typography>
-                                </div>
-                                <div>
-                                    <Typography variant="caption" color="text.secondary">Selected Categories</Typography>
-                                    <Typography fontWeight="bold" sx={{ color: '#0d47a1' }}>
-                                        {selectedCategories.length === categories.length ? 'All' : selectedCategories.join(', ') || 'None'}
-                                    </Typography>
-                                </div>
-                            </Stack>
-                        </Box>
+                <>
+                    {loading ? (
+                        <Card sx={{ borderRadius: 3, p: 4, textAlign: 'center', my: 3 }}>
+                            <CircularProgress size={36} sx={{ mb: 2 }} />
+                            <Typography variant="body1" color="text.secondary">Fetching monthly report data...</Typography>
+                        </Card>
+                    ) : filteredRows.length === 0 ? (
+                        <DataNotFound />
+                    ) : (
+                        <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                            <CardContent sx={{ p: 3 }}>
+                                <Box sx={{ mb: 3, p: 2, bgcolor: '#e3f2fd', borderRadius: 2, borderLeft: '5px solid #1976d2' }}>
+                                    <Stack direction="row" spacing={4} flexWrap="wrap">
+                                        <div>
+                                            <Typography variant="caption" color="text.secondary">From</Typography>
+                                            <Typography fontWeight="bold" sx={{ color: '#0d47a1' }}>{fromDate || '—'}</Typography>
+                                        </div>
+                                        <div>
+                                            <Typography variant="caption" color="text.secondary">To</Typography>
+                                            <Typography fontWeight="bold" sx={{ color: '#0d47a1' }}>{upToDate || '—'}</Typography>
+                                        </div>
+                                        <div>
+                                            <Typography variant="caption" color="text.secondary">Selected Categories</Typography>
+                                            <Typography fontWeight="bold" sx={{ color: '#0d47a1' }}>
+                                                {selectedCategories.length === categories.length ? 'All' : selectedCategories.join(', ') || 'None'}
+                                            </Typography>
+                                        </div>
+                                    </Stack>
+                                </Box>
 
-                        {apiError && (
-                            <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                                {apiError}
-                            </Alert>
-                        )}
+                                {apiError && (
+                                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                                        {apiError}
+                                    </Alert>
+                                )}
 
-                        <Stack
-                            direction={{ xs: 'column', md: 'row' }}
-                            justifyContent="space-between"
-                            alignItems="center"
-                            spacing={2}
-                            sx={{ mb: 3 }}
-                        >
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Search anywhere in report..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                slotProps={{
-                                    input: {
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <SearchIcon color="action" />
-                                            </InputAdornment>
-                                        ),
-                                    },
-                                }}
-                                sx={{ maxWidth: { md: 350 } }}
-                            />
-
-                            <Stack direction="row" spacing={2} sx={{ width: { xs: '100%', md: 'auto' }, justifyContent: 'flex-end' }}>
-                                <Button
-                                    variant="outlined"
-                                    color="primary"
-                                    startIcon={<DownloadIcon />}
-                                    onClick={exportToCSV}
-                                    disabled={filteredRows.length === 0}
-                                    sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}
+                                <Stack
+                                    direction={{ xs: 'column', md: 'row' }}
+                                    justifyContent="space-between"
+                                    alignItems="center"
+                                    spacing={2}
+                                    sx={{ mb: 3 }}
                                 >
-                                    Export CSV
-                                </Button>
-                                <Button
-                                    variant="contained"
-                                    color="success"
-                                    startIcon={<DownloadIcon />}
-                                    onClick={exportToExcel}
-                                    disabled={filteredRows.length === 0}
-                                    sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold', boxShadow: '0 4px 10px rgba(76, 175, 80, 0.2)' }}
-                                >
-                                    Export Excel
-                                </Button>
-                            </Stack>
-                        </Stack>
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        placeholder="Search anywhere in report..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        slotProps={{
+                                            input: {
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <SearchIcon color="action" />
+                                                    </InputAdornment>
+                                                ),
+                                            },
+                                        }}
+                                        sx={{ maxWidth: { md: 350 } }}
+                                    />
 
-                        <TableContainer component={Paper} sx={{ maxHeight: 600, overflow: 'auto', borderRadius: 2, border: '1px solid #e0e0e0' }}>
-                            <Table stickyHeader size="small">
-                                <TableHead>
-                                    <TableRow>
-                                        {[...reportColumns, 'totalQty', 'totalAmount'].map((col) => (
-                                            <TableCell
-                                                key={col}
-                                                align="center"
-                                                sx={{
-                                                    bgcolor: '#1976d2',
-                                                    color: 'white',
-                                                    fontWeight: 'bold',
-                                                    py: 1.5,
-                                                    fontSize: 14,
-                                                    borderRight: '1px solid #1565c0',
-                                                    minWidth: col === 'ezone' || col === 'department' ? 180 : 100
-                                                }}
-                                            >
-                                                {columnHeaderMap[col] || col}
-                                            </TableCell>
-                                        ))}
-                                    </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                    {loading ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={reportColumns.length + 2 || 12}
-                                                align="center"
-                                                sx={{ py: 8 }}
-                                            >
-                                                <CircularProgress />
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : filteredRows.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={reportColumns.length + 2 || 12}
-                                                align="center"
-                                                sx={{ py: 6, color: 'text.secondary' }}
-                                            >
-                                                No records found
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        <>
+                                    <Stack direction="row" spacing={2} sx={{ width: { xs: '100%', md: 'auto' }, justifyContent: 'flex-end' }}>
+                                        <Button
+                                            variant="outlined"
+                                            color="primary"
+                                            startIcon={<DownloadIcon />}
+                                            onClick={exportToCSV}
+                                            disabled={filteredRows.length === 0}
+                                            sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold' }}
+                                        >
+                                            Export CSV
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            color="success"
+                                            startIcon={<DownloadIcon />}
+                                            onClick={exportToExcel}
+                                            disabled={filteredRows.length === 0}
+                                            sx={{ textTransform: 'none', borderRadius: 2, fontWeight: 'bold', boxShadow: '0 4px 10px rgba(76, 175, 80, 0.2)' }}
+                                        >
+                                            Export Excel
+                                        </Button>
+                                    </Stack>
+                                </Stack>
+
+                                <TableContainer component={Paper} sx={{ maxHeight: 600, overflow: 'auto', borderRadius: 2, border: '1px solid #e0e0e0' }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
+                                            <TableRow>
+                                                {[...reportColumns, 'totalQty', 'totalAmount'].map((col) => (
+                                                    <TableCell
+                                                        key={col}
+                                                        align="center"
+                                                        sx={{
+                                                            bgcolor: '#1976d2',
+                                                            color: 'white',
+                                                            fontWeight: 'bold',
+                                                            py: 1.5,
+                                                            fontSize: 14,
+                                                            borderRight: '1px solid #1565c0',
+                                                            minWidth: col === 'ezone' || col === 'department' ? 180 : 100
+                                                        }}
+                                                    >
+                                                        {columnHeaderMap[col] || col}
+                                                    </TableCell>
+                                                ))}
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
                                             {/* Data Rows */}
                                             {filteredRows.map((row, index) => {
                                                 const tQty = (Number(row.totalMeal) || 0) + (Number(row.tea) || 0) + (Number(row.fs) || 0) + (Number(row.nb) || 0);
@@ -594,13 +582,13 @@ const MonthlyReport: React.FC = () => {
                                                     </TableCell>
                                                 ))}
                                             </TableRow>
-                                        </>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </CardContent>
-                </Card>
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </CardContent>
+                        </Card>
+                    )}
+                </>
             )}
         </Box>
     );

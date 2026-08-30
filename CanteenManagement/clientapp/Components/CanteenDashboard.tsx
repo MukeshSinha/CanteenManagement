@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiFetch } from '../src/utils/api';
+import toast from 'react-hot-toast';
 import {
     Box,
     Card,
@@ -204,6 +205,9 @@ function CanteenDashboard() {
                 Object.keys(row).forEach(key => {
                     normalized[key.toLowerCase()] = row[key];
                 });
+                if (!normalized.empname && (normalized.name || normalized.emp_name)) {
+                    normalized.empname = normalized.name || normalized.emp_name;
+                }
                 return normalized;
             });
 
@@ -304,7 +308,7 @@ function CanteenDashboard() {
         } else {
             return (
                 (row.empcode && String(row.empcode).toLowerCase().includes(q)) ||
-                (row.empname && String(row.empname).toLowerCase().includes(q)) ||
+                ((row.empname || row.name) && String(row.empname || row.name).toLowerCase().includes(q)) ||
                 (row.dept && String(row.dept).toLowerCase().includes(q)) ||
                 (row.emptype && String(row.emptype).toLowerCase().includes(q)) ||
                 (row.sft && String(row.sft).toLowerCase().includes(q)) ||
@@ -314,76 +318,92 @@ function CanteenDashboard() {
     });
 
     const exportToCSV = () => {
-        if (!filteredRows || filteredRows.length === 0) return;
-        let headers: string[];
-        let exportData: any[];
-
-        if (isCouponData) {
-            headers = ["Sr.No", "Employee Code", "Tea", "Snacks", "Beverage & Snacks", "Log Date", "Entry Date"];
-            exportData = filteredRows.map((row: any, idx) => [
-                idx + 1,
-                `"${String(row.empcode || '').replace(/"/g, '""')}"`,
-                row.tea !== undefined ? row.tea : 0,
-                row.snk !== undefined ? row.snk : 0,
-                row.bs !== undefined ? row.bs : 0,
-                `"${String(formatDate(row.logdt) || '').replace(/"/g, '""')}"`,
-                `"${String(formatDate(row.entrydt) || '').replace(/"/g, '""')}"`
-            ]);
-        } else {
-            headers = ["Sr.No", "Emp Code", "Name", "Type", "Department", "Date", "Punch Time", "Shift"];
-            exportData = filteredRows.map((row, idx) => [
-                idx + 1,
-                `"${String(row.empcode || '').replace(/"/g, '""')}"`,
-                `"${String(row.empname || '').replace(/"/g, '""')}"`,
-                `"${String(row.emptype || '').replace(/"/g, '""')}"`,
-                `"${String(row.dept || '').replace(/"/g, '""')}"`,
-                `"${String(formatDate(row.att_date) || '').replace(/"/g, '""')}"`,
-                `"${String(formatTime(row.punchtime) || '').replace(/"/g, '""')}"`,
-                `"${String(row.sft || '').replace(/"/g, '""')}"`
-            ]);
+        if (!filteredRows || filteredRows.length === 0) {
+            toast.error("No data available to export.");
+            return;
         }
+        try {
+            let headers: string[];
+            let exportData: any[];
 
-        const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
-        saveAs(blob, `${cleanTitle}.csv`);
+            if (isCouponData) {
+                headers = ["Sr.No", "Employee Code", "Tea", "Snacks", "Beverage & Snacks", "Log Date", "Entry Date"];
+                exportData = filteredRows.map((row: any, idx) => [
+                    idx + 1,
+                    `"${String(row.empcode || '').replace(/"/g, '""')}"`,
+                    row.tea !== undefined ? row.tea : 0,
+                    row.snk !== undefined ? row.snk : 0,
+                    row.bs !== undefined ? row.bs : 0,
+                    `"${String(formatDate(row.logdt) || '').replace(/"/g, '""')}"`,
+                    `"${String(formatDate(row.entrydt) || '').replace(/"/g, '""')}"`
+                ]);
+            } else {
+                headers = ["Sr.No", "Emp Code", "Name", "Type", "Department", "Date", "Punch Time", "Shift"];
+                exportData = filteredRows.map((row, idx) => [
+                    idx + 1,
+                    `"${String(row.empcode || '').replace(/"/g, '""')}"`,
+                    `"${String(row.empname || row.name || '').replace(/"/g, '""')}"`,
+                    `"${String(row.emptype || '').replace(/"/g, '""')}"`,
+                    `"${String(row.dept || '').replace(/"/g, '""')}"`,
+                    `"${String(formatDate(row.att_date) || '').replace(/"/g, '""')}"`,
+                    `"${String(formatTime(row.punchtime) || '').replace(/"/g, '""')}"`,
+                    `"${String(row.sft || '').replace(/"/g, '""')}"`
+                ]);
+            }
+
+            const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+            saveAs(blob, `${cleanTitle}.csv`);
+            toast.success("CSV report downloaded successfully!");
+        } catch (err) {
+            toast.error("Failed to export CSV report.");
+        }
     };
 
     const exportToExcel = () => {
-        if (!filteredRows || filteredRows.length === 0) return;
-        let dataRows: any[];
-
-        if (isCouponData) {
-            dataRows = filteredRows.map((row: any, idx) => ({
-                "Sr.No": idx + 1,
-                "Employee Code": row.empcode || '',
-                "Tea": row.tea !== undefined ? row.tea : 0,
-                "Snacks": row.snk !== undefined ? row.snk : 0,
-                "Beverage & Snacks": row.bs !== undefined ? row.bs : 0,
-                "Log Date": formatDate(row.logdt),
-                "Entry Date": formatDate(row.entrydt)
-            }));
-        } else {
-            dataRows = filteredRows.map((row, idx) => ({
-                "Sr.No": idx + 1,
-                "Emp Code": row.empcode || '',
-                "Name": row.empname || '',
-                "Type": row.emptype || '',
-                "Department": row.dept || '',
-                "Date": formatDate(row.att_date) || '',
-                "Punch Time": formatTime(row.punchtime) || '',
-                "Shift": row.sft || ''
-            }));
+        if (!filteredRows || filteredRows.length === 0) {
+            toast.error("No data available to export.");
+            return;
         }
+        try {
+            let dataRows: any[];
 
-        const ws = XLSX.utils.json_to_sheet(dataRows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Details");
+            if (isCouponData) {
+                dataRows = filteredRows.map((row: any, idx) => ({
+                    "Sr.No": idx + 1,
+                    "Employee Code": row.empcode || '',
+                    "Tea": row.tea !== undefined ? row.tea : 0,
+                    "Snacks": row.snk !== undefined ? row.snk : 0,
+                    "Beverage & Snacks": row.bs !== undefined ? row.bs : 0,
+                    "Log Date": formatDate(row.logdt),
+                    "Entry Date": formatDate(row.entrydt)
+                }));
+            } else {
+                dataRows = filteredRows.map((row, idx) => ({
+                    "Sr.No": idx + 1,
+                    "Emp Code": row.empcode || '',
+                    "Name": row.empname || row.name || '',
+                    "Type": row.emptype || '',
+                    "Department": row.dept || '',
+                    "Date": formatDate(row.att_date) || '',
+                    "Punch Time": formatTime(row.punchtime) || '',
+                    "Shift": row.sft || ''
+                }));
+            }
 
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-        const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
-        saveAs(blob, `${cleanTitle}.xlsx`);
+            const ws = XLSX.utils.json_to_sheet(dataRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Details");
+
+            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+            const cleanTitle = (modal.title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+            saveAs(blob, `${cleanTitle}.xlsx`);
+            toast.success("Excel report downloaded successfully!");
+        } catch (err) {
+            toast.error("Failed to export Excel report.");
+        }
     };
 
     const handleChangePage = (_event: unknown, newPage: number) => {
@@ -844,7 +864,7 @@ function CanteenDashboard() {
                                                         ) : (
                                                             <>
                                                                 <TableCell sx={{ fontWeight: 600, fontSize: 12, whiteSpace: 'nowrap' }}>{row.empcode || '—'}</TableCell>
-                                                                <TableCell sx={{ fontSize: 12, whiteSpace: 'nowrap' }}>{row.empname || '—'}</TableCell>
+                                                                <TableCell sx={{ fontSize: 12, whiteSpace: 'nowrap' }}>{row.empname || row.name || '—'}</TableCell>
                                                                 <TableCell sx={{ fontSize: 12 }}>
                                                                     <Chip
                                                                         label={row.emptype || '—'}
@@ -893,15 +913,27 @@ function CanteenDashboard() {
 
                         {/* Pagination Footer */}
                         {!modal.loading && !modal.error && filteredRows.length > 0 && (
-                            <TablePagination
-                                rowsPerPageOptions={[50, 100, 200]}
-                                component="div"
-                                count={filteredRows.length}
-                                rowsPerPage={rowsPerPage}
-                                page={page}
-                                onPageChange={handleChangePage}
-                                onRowsPerPageChange={handleChangeRowsPerPage}
-                            />
+                            <Box sx={{ borderTop: '1px solid #e2e8f0', bgcolor: '#f8fafc', px: 2, py: 0.5, flexShrink: 0 }}>
+                                <TablePagination
+                                    rowsPerPageOptions={[50, 100, 200, 500, 1000]}
+                                    component="div"
+                                    count={filteredRows.length}
+                                    rowsPerPage={rowsPerPage}
+                                    page={page}
+                                    onPageChange={handleChangePage}
+                                    onRowsPerPageChange={handleChangeRowsPerPage}
+                                    sx={{
+                                        '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                                            fontSize: '13px',
+                                            fontWeight: 600,
+                                            color: '#334155',
+                                        },
+                                        '.MuiTablePagination-select': {
+                                            fontWeight: 600,
+                                        }
+                                    }}
+                                />
+                            </Box>
                         )}
                     </Box>
                 </Box>

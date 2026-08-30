@@ -28,6 +28,7 @@ import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { apiFetch } from '../src/utils/api';
 import Swal from 'sweetalert2';
+import DataNotFound from './Common/DataNotFound';
 
 const columnHeaderMap: Record<string, string> = {
     ezone: "Contractor Name",
@@ -513,9 +514,18 @@ const ContractorDeptWiseSummary: React.FC = () => {
             </Card>
 
             {showReport && (
-                <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
-                    <CardContent sx={{ p: 3 }}>
-                        <Box sx={{ mb: 3, p: 2, bgcolor: '#e3f2fd', borderRadius: 2, borderLeft: '5px solid #1976d2' }}>
+                <>
+                    {loading ? (
+                        <Card sx={{ borderRadius: 3, p: 4, textAlign: 'center', my: 3 }}>
+                            <CircularProgress size={36} sx={{ mb: 2 }} />
+                            <Typography variant="body1" color="text.secondary">Fetching contractor summary data...</Typography>
+                        </Card>
+                    ) : filteredRows.length === 0 ? (
+                        <DataNotFound />
+                    ) : (
+                        <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', overflow: 'hidden' }}>
+                            <CardContent sx={{ p: 3 }}>
+                                <Box sx={{ mb: 3, p: 2, bgcolor: '#e3f2fd', borderRadius: 2, borderLeft: '5px solid #1976d2' }}>
                             <Stack direction="row" spacing={4} flexWrap="wrap">
                                 <div>
                                     <Typography variant="caption" color="text.secondary">From</Typography>
@@ -613,28 +623,7 @@ const ContractorDeptWiseSummary: React.FC = () => {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {loading ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={reportColumns.length + 2 || 12}
-                                                align="center"
-                                                sx={{ py: 8 }}
-                                            >
-                                                <CircularProgress />
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : filteredRows.length === 0 ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={reportColumns.length + 2 || 12}
-                                                align="center"
-                                                sx={{ py: 6, color: 'text.secondary' }}
-                                            >
-                                                No records found
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : (
-                                        <>
+                                    {/* Grouped Rows */}
                                             {/* Grouped Rows */}
                                             {(() => {
                                                 const grouped = getGroupedRows(filteredRows);
@@ -725,14 +714,14 @@ const ContractorDeptWiseSummary: React.FC = () => {
                                                     </TableCell>
                                                 ))}
                                             </TableRow>
-                                        </>
-                                    )}
                                 </TableBody>
                             </Table>
                         </TableContainer>
                     </CardContent>
                 </Card>
             )}
+        </>
+    )}
         </Box>
     );
 };

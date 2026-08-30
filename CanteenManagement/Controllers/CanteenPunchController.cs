@@ -227,5 +227,28 @@ namespace CanteenManagement.Controllers
             }
 
         }
+
+        // get Machine wise punch
+
+        [HttpGet("MachineWise-Punch")]
+        public async Task<IActionResult> MachineWisePunch(
+            [FromQuery] string? fromdate = null,
+            [FromQuery] string? uptodate = null
+            )
+        {
+            try
+            {
+                string url = ApiService.Canteen + $"CanteenPunch/MachineWisePunch?fromdate={fromdate}&Uptodate={uptodate}";
+                var mHeader = _headers.GetHeaders();
+                var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+                return Content(response, "application/json");
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(new { message = ex.Message });
+            }
+           
+        }
     }
 }

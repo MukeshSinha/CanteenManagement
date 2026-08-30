@@ -19,8 +19,10 @@ import {
     TablePagination,
 } from '@mui/material';
 import Swal from 'sweetalert2';
+import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import { apiFetch } from '../src/utils/api'; // adjust path if needed
+import DataNotFound from './Common/DataNotFound';
 
 const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -73,6 +75,7 @@ const UploadMeal = () => {
             file.name.toLowerCase().endsWith('.xls');
 
         if (!isExcel) {
+            toast.error('Only Excel files (.xlsx or .xls) are allowed!');
             Swal.fire({
                 icon: 'error',
                 title: 'Invalid File!',
@@ -144,6 +147,7 @@ const UploadMeal = () => {
 
     const handlePreviewUpload = async () => {
         if (!selectedFile || !selectedMonth || !year || !sheetNo || isNaN(Number(sheetNo))) {
+            toast.error('Please fill all fields before uploading');
             Swal.fire({ icon: 'warning', title: 'Please fill all fields' });
             return;
         }
@@ -214,9 +218,11 @@ const UploadMeal = () => {
 
             setIsPreviewMode(true);
             setHasDataLoaded(true);
+            toast.success('Preview loaded successfully!');
             Swal.fire({ icon: 'success', title: 'Preview Loaded' });
         } catch (err) {
             console.error(err);
+            toast.error('Error occurred while loading preview');
             Swal.fire({ icon: 'error', title: 'Error occurred' });
             setHasDataLoaded(false);
         } finally {
@@ -225,26 +231,39 @@ const UploadMeal = () => {
     };
 
     const exportToExcel = (data: any[], filename: string) => {
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-        XLSX.writeFile(wb, `${filename}.xlsx`);
+        try {
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+            XLSX.writeFile(wb, `${filename}.xlsx`);
+            toast.success('Excel downloaded successfully!');
+        } catch (err) {
+            toast.error('Failed to export Excel.');
+        }
     };
 
     const exportToCSV = (data: any[], filename: string) => {
-        if (data.length === 0) return;
-        const header = Object.keys(data[0]);
-        const rows = data.map((row) =>
-            header.map((field) => `"${String(row[field] ?? '')}"`).join(',')
-        );
-        const csv = [header.join(','), ...rows].join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `${filename}.csv`;
-        link.click();
-        window.URL.revokeObjectURL(url);
+        if (data.length === 0) {
+            toast.error('No data available to export.');
+            return;
+        }
+        try {
+            const header = Object.keys(data[0]);
+            const rows = data.map((row) =>
+                header.map((field) => `"${String(row[field] ?? '')}"`).join(',')
+            );
+            const csv = [header.join(','), ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${filename}.csv`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+            toast.success('CSV downloaded successfully!');
+        } catch (err) {
+            toast.error('Failed to export CSV.');
+        }
     };
 
     const handleFinalSubmit = async () => {
@@ -269,6 +288,7 @@ const UploadMeal = () => {
 
             if (!res.ok) throw new Error('Submit failed');
 
+            toast.success('Submitted successfully!');
             Swal.fire({ icon: 'success', title: 'Submitted Successfully' });
 
             // Reset
@@ -283,6 +303,7 @@ const UploadMeal = () => {
             setSearchText('');
             setSearchTextSummary('');
         } catch (err) {
+            toast.error('Submission failed.');
             Swal.fire({ icon: 'error', title: 'Submission Failed' });
         } finally {
             setLoading(false);
@@ -460,7 +481,7 @@ const UploadMeal = () => {
                                             {filteredData.length === 0 ? (
                                                 <TableRow>
                                                     <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                                                        No Data Found
+                                                        <DataNotFound message="No meal records found" />
                                                     </TableCell>
                                                 </TableRow>
                                             ) : (

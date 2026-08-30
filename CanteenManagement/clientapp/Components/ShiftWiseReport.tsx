@@ -25,7 +25,8 @@ import {
     Download as DownloadIcon,
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
-import { apiFetch } from '../src/utils/api'
+import { apiFetch } from '../src/utils/api';
+import DataNotFound from './Common/DataNotFound';
 //import { apiCallingData } from '../src/Services/apiCalling';    
 
 
@@ -358,179 +359,164 @@ function ShiftWiseReport() {
             </Card>
 
             {showReport && (
-                <Card>
-                    <CardContent>
-                        <Box sx={{ mb: 3, p: 2, bgcolor: '#e3f2fd', borderRadius: 1 }}>
-                            <Stack direction="row" spacing={4} flexWrap="wrap">
-                                <div>
-                                    <Typography variant="caption" color="text.secondary">From</Typography>
-                                    <Typography>{fromDate || '—'}</Typography>
-                                </div>
-                                <div>
-                                    <Typography variant="caption" color="text.secondary">To</Typography>
-                                    <Typography>{upToDate || '—'}</Typography>
-                                </div>
-                                <div>
-                                    <Typography variant="caption" color="text.secondary">Categories</Typography>
-                                    <Typography fontWeight={500}>
-                                        {selectedCategory || 'None'}
-                                    </Typography>
-                                </div>
-                                <div>
-                                    <Typography variant="caption" color="text.secondary">Contractor</Typography>
-                                    <Typography>{contractor || 'All'}</Typography>
-                                </div>
-                            </Stack>
-                        </Box>
+                <>
+                    {loading ? (
+                        <Card sx={{ borderRadius: 2, p: 4, textAlign: 'center', my: 3 }}>
+                            <CircularProgress size={36} sx={{ mb: 2 }} />
+                            <Typography variant="body1" color="text.secondary">Fetching report data...</Typography>
+                        </Card>
+                    ) : filteredRows.length === 0 ? (
+                        <DataNotFound />
+                    ) : (
+                        <Card>
+                            <CardContent>
+                                <Box sx={{ mb: 3, p: 2, bgcolor: '#e3f2fd', borderRadius: 1 }}>
+                                    <Stack direction="row" spacing={4} flexWrap="wrap">
+                                        <div>
+                                            <Typography variant="caption" color="text.secondary">From</Typography>
+                                            <Typography>{fromDate || '—'}</Typography>
+                                        </div>
+                                        <div>
+                                            <Typography variant="caption" color="text.secondary">To</Typography>
+                                            <Typography>{upToDate || '—'}</Typography>
+                                        </div>
+                                        <div>
+                                            <Typography variant="caption" color="text.secondary">Categories</Typography>
+                                            <Typography fontWeight={500}>
+                                                {selectedCategory || 'None'}
+                                            </Typography>
+                                        </div>
+                                        <div>
+                                            <Typography variant="caption" color="text.secondary">Contractor</Typography>
+                                            <Typography>{contractor || 'All'}</Typography>
+                                        </div>
+                                    </Stack>
+                                </Box>
 
-                        {apiError && (
-                            <Alert severity="error" sx={{ mb: 3 }}>
-                                {apiError}
-                            </Alert>
-                        )}
+                                {apiError && (
+                                    <Alert severity="error" sx={{ mb: 3 }}>
+                                        {apiError}
+                                    </Alert>
+                                )}
 
-                        <Stack
-                            direction={{ xs: 'column', md: 'row' }}
-                            justifyContent="space-between"
-                            spacing={2}
-                            sx={{ mb: 3 }}
-                        >
-                            <TextField
-                                fullWidth
-                                size="small"
-                                placeholder="Search anywhere..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                slotProps={{
-                                    input: {
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <SearchIcon />
-                                            </InputAdornment>
-                                        ),
-                                    },
-                                }}
-                            />
-                            <Button
-                                variant="outlined"
-                                startIcon={<DownloadIcon />}
-                                onClick={exportToExcel}
-                                disabled={filteredRows.length === 0}
-                            >
-                                Export Excel
-                            </Button>
-                        </Stack>
+                                <Stack
+                                    direction={{ xs: 'column', md: 'row' }}
+                                    justifyContent="space-between"
+                                    spacing={2}
+                                    sx={{ mb: 3 }}
+                                >
+                                    <TextField
+                                        fullWidth
+                                        size="small"
+                                        placeholder="Search anywhere..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        slotProps={{
+                                            input: {
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <SearchIcon />
+                                                    </InputAdornment>
+                                                ),
+                                            },
+                                        }}
+                                    />
+                                    <Button
+                                        variant="outlined"
+                                        startIcon={<DownloadIcon />}
+                                        onClick={exportToExcel}
+                                        disabled={filteredRows.length === 0}
+                                    >
+                                        Export Excel
+                                    </Button>
+                                </Stack>
 
-                        <TableContainer component={Paper} sx={{ maxHeight: 600, overflow: 'auto' }}>
-                            <Table stickyHeader size="small">
-                                <TableHead>
+                                <TableContainer component={Paper} sx={{ maxHeight: 600, overflow: 'auto' }}>
+                                    <Table stickyHeader size="small">
+                                        <TableHead>
 
-                                    {/* First Header Row */}
-                                    <TableRow>
+                                            {/* First Header Row */}
+                                            <TableRow>
 
-                                        {leftColumns.map((col) => (
-                                            <TableCell
-                                                key={col}
-                                                rowSpan={2}
-                                                align="center"
-                                                sx={{
-                                                    bgcolor: '#1976d2',
-                                                    color: 'white',
-                                                    fontWeight: 'bold',
-                                                    minWidth: 120
-                                                }}
-                                            >
-                                                {columnHeaderMap[col] || col}
-                                            </TableCell>
-                                        ))}
-
-                                        {shiftColumns.length > 0 && (
-                                            <TableCell
-                                                colSpan={shiftColumns.length}
-                                                align="center"
-                                                sx={{
-                                                    bgcolor: '#1976d2',
-                                                    color: 'white',
-                                                    fontWeight: 'bold'
-                                                }}
-                                            >
-                                                Shift
-                                            </TableCell>
-                                        )}
-
-                                    </TableRow>
-
-                                    {/* Second Header Row */}
-                                    {shiftColumns.length > 0 && (
-                                        <TableRow>
-                                            {shiftColumns.map((col) => (
-                                                <TableCell
-                                                    key={col}
-                                                    align="center"
-                                                    sx={{
-                                                        bgcolor: '#1976d2',
-                                                        color: 'white',
-                                                        fontWeight: 'bold'
-                                                    }}
-                                                >
-                                                    {col}
-                                                </TableCell>
-                                            ))}
-                                        </TableRow>
-                                    )}
-
-                                </TableHead>
-                                <TableBody>
-
-                                    {loading ? (
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={reportColumns.length || 10}
-                                                align="center"
-                                                sx={{ py: 8 }}
-                                            >
-                                                <CircularProgress />
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : filteredRows.length === 0 ? (
-
-                                        <TableRow>
-                                            <TableCell
-                                                colSpan={reportColumns.length || 10}
-                                                align="center"
-                                                sx={{ py: 6 }}
-                                            >
-                                                No records found
-                                            </TableCell>
-                                        </TableRow>
-
-                                    ) : (
-
-                                        filteredRows.map((row, index) => (
-                                            <TableRow key={index} hover>
-
-                                                {reportColumns.map((col) => (
+                                                {leftColumns.map((col) => (
                                                     <TableCell
                                                         key={col}
+                                                        rowSpan={2}
                                                         align="center"
-                                                        sx={{ fontSize: 13 }}
+                                                        sx={{
+                                                            bgcolor: '#1976d2',
+                                                            color: 'white',
+                                                            fontWeight: 'bold',
+                                                            minWidth: 120
+                                                        }}
                                                     >
-                                                        {row[col] !== null && row[col] !== undefined
-                                                            ? String(row[col])
-                                                            : '—'}
+                                                        {columnHeaderMap[col] || col}
                                                     </TableCell>
                                                 ))}
 
+                                                {shiftColumns.length > 0 && (
+                                                    <TableCell
+                                                        colSpan={shiftColumns.length}
+                                                        align="center"
+                                                        sx={{
+                                                            bgcolor: '#1976d2',
+                                                            color: 'white',
+                                                            fontWeight: 'bold'
+                                                        }}
+                                                    >
+                                                        Shift
+                                                    </TableCell>
+                                                )}
+
                                             </TableRow>
-                                        ))
 
-                                    )}
+                                            {/* Second Header Row */}
+                                            {shiftColumns.length > 0 && (
+                                                <TableRow>
+                                                    {shiftColumns.map((col) => (
+                                                        <TableCell
+                                                            key={col}
+                                                            align="center"
+                                                            sx={{
+                                                                bgcolor: '#1976d2',
+                                                                color: 'white',
+                                                                fontWeight: 'bold'
+                                                            }}
+                                                        >
+                                                            {col}
+                                                        </TableCell>
+                                                    ))}
+                                                </TableRow>
+                                            )}
 
-                                </TableBody>
-                            </Table>
-                        </TableContainer>
-                    </CardContent>
-                </Card>
+                                        </TableHead>
+                                        <TableBody>
+
+                                            {filteredRows.map((row, index) => (
+                                                <TableRow key={index} hover>
+
+                                                    {reportColumns.map((col) => (
+                                                        <TableCell
+                                                            key={col}
+                                                            align="center"
+                                                            sx={{ fontSize: 13 }}
+                                                        >
+                                                            {row[col] !== null && row[col] !== undefined
+                                                                ? String(row[col])
+                                                                : '—'}
+                                                        </TableCell>
+                                                    ))}
+
+                                                </TableRow>
+                                            ))}
+
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </CardContent>
+                        </Card>
+                    )}
+                </>
             )}
         </Box>
     );

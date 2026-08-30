@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../src/utils/api";
+import toast from "react-hot-toast";
 import {
     Box,
     Card,
@@ -367,117 +368,149 @@ export default function UserDashboard() {
     };
 
     const exportMealToCSV = (filteredRows: any[], title: string) => {
-        if (!filteredRows || filteredRows.length === 0) return;
-        const headers = ["Sr.No", "Employee Code", "Employee Name", "Employee Type", "Zone", "Punch Time", "Prev Punch Time"];
-        const exportData = filteredRows.map((row, idx) => {
-            const empCode = getRowVal(row, ['empCode', 'empcode']) || '';
-            const name = getRowVal(row, ['name', 'empName', 'empname']) || '';
-            const empType = getRowVal(row, ['empType', 'emptype']) || '';
-            const eZone = getRowVal(row, ['eZone', 'ezone']) || '';
-            const punchTime = getRowVal(row, ['punchTime', 'punchtime']) || '';
-            const prevPunchTime = getRowVal(row, ['prevPunchTime', 'prevpunchtime']) || '';
-            return [
-                idx + 1,
-                `"${String(empCode).replace(/"/g, '""')}"`,
-                `"${String(name).replace(/"/g, '""')}"`,
-                `"${String(empType).replace(/"/g, '""')}"`,
-                `"${String(eZone).replace(/"/g, '""')}"`,
-                `"${String(formatTime(punchTime)).replace(/"/g, '""')}"`,
-                `"${String(formatTime(prevPunchTime)).replace(/"/g, '""')}"`
-            ];
-        });
+        if (!filteredRows || filteredRows.length === 0) {
+            toast.error("No data available to export.");
+            return;
+        }
+        try {
+            const headers = ["Sr.No", "Employee Code", "Employee Name", "Employee Type", "Zone", "Punch Time", "Prev Punch Time"];
+            const exportData = filteredRows.map((row, idx) => {
+                const empCode = getRowVal(row, ['empCode', 'empcode']) || '';
+                const name = getRowVal(row, ['name', 'empName', 'empname']) || '';
+                const empType = getRowVal(row, ['empType', 'emptype']) || '';
+                const eZone = getRowVal(row, ['eZone', 'ezone']) || '';
+                const punchTime = getRowVal(row, ['punchTime', 'punchtime']) || '';
+                const prevPunchTime = getRowVal(row, ['prevPunchTime', 'prevpunchtime']) || '';
+                return [
+                    idx + 1,
+                    `"${String(empCode).replace(/"/g, '""')}"`,
+                    `"${String(name).replace(/"/g, '""')}"`,
+                    `"${String(empType).replace(/"/g, '""')}"`,
+                    `"${String(eZone).replace(/"/g, '""')}"`,
+                    `"${String(formatTime(punchTime)).replace(/"/g, '""')}"`,
+                    `"${String(formatTime(prevPunchTime)).replace(/"/g, '""')}"`
+                ];
+            });
 
-        const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const cleanTitle = (title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
-        saveAs(blob, `${cleanTitle}.csv`);
+            const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const cleanTitle = (title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+            saveAs(blob, `${cleanTitle}.csv`);
+            toast.success("CSV file downloaded successfully!");
+        } catch (err) {
+            toast.error("Error exporting CSV file.");
+        }
     };
 
     const exportMealToExcel = (filteredRows: any[], title: string) => {
-        if (!filteredRows || filteredRows.length === 0) return;
-        const dataRows = filteredRows.map((row, idx) => {
-            const empCode = getRowVal(row, ['empCode', 'empcode']) || '';
-            const name = getRowVal(row, ['name', 'empName', 'empname']) || '';
-            const empType = getRowVal(row, ['empType', 'emptype']) || '';
-            const eZone = getRowVal(row, ['eZone', 'ezone']) || '';
-            const punchTime = getRowVal(row, ['punchTime', 'punchtime']) || '';
-            const prevPunchTime = getRowVal(row, ['prevPunchTime', 'prevpunchtime']) || '';
-            return {
-                "Sr.No": idx + 1,
-                "Employee Code": empCode,
-                "Employee Name": name,
-                "Employee Type": empType,
-                "Zone": eZone,
-                "Punch Time": formatTime(punchTime),
-                "Prev Punch Time": formatTime(prevPunchTime)
-            };
-        });
+        if (!filteredRows || filteredRows.length === 0) {
+            toast.error("No data available to export.");
+            return;
+        }
+        try {
+            const dataRows = filteredRows.map((row, idx) => {
+                const empCode = getRowVal(row, ['empCode', 'empcode']) || '';
+                const name = getRowVal(row, ['name', 'empName', 'empname']) || '';
+                const empType = getRowVal(row, ['empType', 'emptype']) || '';
+                const eZone = getRowVal(row, ['eZone', 'ezone']) || '';
+                const punchTime = getRowVal(row, ['punchTime', 'punchtime']) || '';
+                const prevPunchTime = getRowVal(row, ['prevPunchTime', 'prevpunchtime']) || '';
+                return {
+                    "Sr.No": idx + 1,
+                    "Employee Code": empCode,
+                    "Employee Name": name,
+                    "Employee Type": empType,
+                    "Zone": eZone,
+                    "Punch Time": formatTime(punchTime),
+                    "Prev Punch Time": formatTime(prevPunchTime)
+                };
+            });
 
-        const ws = XLSX.utils.json_to_sheet(dataRows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Details");
+            const ws = XLSX.utils.json_to_sheet(dataRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Details");
 
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-        const cleanTitle = (title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
-        saveAs(blob, `${cleanTitle}.xlsx`);
+            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+            const cleanTitle = (title || 'Punch_Details').replace(/[^a-zA-Z0-9]/g, '_');
+            saveAs(blob, `${cleanTitle}.xlsx`);
+            toast.success("Excel file downloaded successfully!");
+        } catch (err) {
+            toast.error("Error exporting Excel file.");
+        }
     };
 
     const exportCouponToCSV = (filteredRows: any[], title: string) => {
-        if (!filteredRows || filteredRows.length === 0) return;
-        const headers = ["Sr.No", "Employee Code", "Tea", "Snacks", "Beverage & Snacks", "Log Date", "Entry Date"];
-        const exportData = filteredRows.map((row: any, idx) => {
-            const empCode = getRowVal(row, ['empCode', 'empcode']) || '';
-            const tea = getRowVal(row, ['tea']) !== undefined ? getRowVal(row, ['tea']) : 0;
-            const snk = getRowVal(row, ['snk', 'snack', 'snacks']) !== undefined ? getRowVal(row, ['snk', 'snack', 'snacks']) : 0;
-            const bs = getRowVal(row, ['bs']) !== undefined ? getRowVal(row, ['bs']) : 0;
-            const logdt = getRowVal(row, ['logdt', 'logDate', 'logdate']) || '';
-            const entrydt = getRowVal(row, ['entrydt', 'entryDate', 'entrydate']) || '';
-            return [
-                idx + 1,
-                `"${String(empCode).replace(/"/g, '""')}"`,
-                tea,
-                snk,
-                bs,
-                `"${String(formatDate(logdt)).replace(/"/g, '""')}"`,
-                `"${String(formatDate(entrydt)).replace(/"/g, '""')}"`
-            ];
-        });
+        if (!filteredRows || filteredRows.length === 0) {
+            toast.error("No data available to export.");
+            return;
+        }
+        try {
+            const headers = ["Sr.No", "Employee Code", "Tea", "Snacks", "Beverage & Snacks", "Log Date", "Entry Date"];
+            const exportData = filteredRows.map((row: any, idx) => {
+                const empCode = getRowVal(row, ['empCode', 'empcode']) || '';
+                const tea = getRowVal(row, ['tea']) !== undefined ? getRowVal(row, ['tea']) : 0;
+                const snk = getRowVal(row, ['snk', 'snack', 'snacks']) !== undefined ? getRowVal(row, ['snk', 'snack', 'snacks']) : 0;
+                const bs = getRowVal(row, ['bs']) !== undefined ? getRowVal(row, ['bs']) : 0;
+                const logdt = getRowVal(row, ['logdt', 'logDate', 'logdate']) || '';
+                const entrydt = getRowVal(row, ['entrydt', 'entryDate', 'entrydate']) || '';
+                return [
+                    idx + 1,
+                    `"${String(empCode).replace(/"/g, '""')}"`,
+                    tea,
+                    snk,
+                    bs,
+                    `"${String(formatDate(logdt)).replace(/"/g, '""')}"`,
+                    `"${String(formatDate(entrydt)).replace(/"/g, '""')}"`
+                ];
+            });
 
-        const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const cleanTitle = (title || 'Coupon_Details').replace(/[^a-zA-Z0-9]/g, '_');
-        saveAs(blob, `${cleanTitle}.csv`);
+            const csvContent = [headers.join(","), ...exportData.map(r => r.join(","))].join("\n");
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const cleanTitle = (title || 'Coupon_Details').replace(/[^a-zA-Z0-9]/g, '_');
+            saveAs(blob, `${cleanTitle}.csv`);
+            toast.success("CSV file downloaded successfully!");
+        } catch (err) {
+            toast.error("Error exporting CSV file.");
+        }
     };
 
     const exportCouponToExcel = (filteredRows: any[], title: string) => {
-        if (!filteredRows || filteredRows.length === 0) return;
-        const dataRows = filteredRows.map((row: any, idx) => {
-            const empCode = getRowVal(row, ['empCode', 'empcode']) || '';
-            const tea = getRowVal(row, ['tea']) !== undefined ? getRowVal(row, ['tea']) : 0;
-            const snk = getRowVal(row, ['snk', 'snack', 'snacks']) !== undefined ? getRowVal(row, ['snk', 'snack', 'snacks']) : 0;
-            const bs = getRowVal(row, ['bs']) !== undefined ? getRowVal(row, ['bs']) : 0;
-            const logdt = getRowVal(row, ['logdt', 'logDate', 'logdate']) || '';
-            const entrydt = getRowVal(row, ['entrydt', 'entryDate', 'entrydate']) || '';
-            return {
-                "Sr.No": idx + 1,
-                "Employee Code": empCode,
-                "Tea": tea,
-                "Snacks": snk,
-                "Beverage & Snacks": bs,
-                "Log Date": formatDate(logdt),
-                "Entry Date": formatDate(entrydt)
-            };
-        });
+        if (!filteredRows || filteredRows.length === 0) {
+            toast.error("No data available to export.");
+            return;
+        }
+        try {
+            const dataRows = filteredRows.map((row: any, idx) => {
+                const empCode = getRowVal(row, ['empCode', 'empcode']) || '';
+                const tea = getRowVal(row, ['tea']) !== undefined ? getRowVal(row, ['tea']) : 0;
+                const snk = getRowVal(row, ['snk', 'snack', 'snacks']) !== undefined ? getRowVal(row, ['snk', 'snack', 'snacks']) : 0;
+                const bs = getRowVal(row, ['bs']) !== undefined ? getRowVal(row, ['bs']) : 0;
+                const logdt = getRowVal(row, ['logdt', 'logDate', 'logdate']) || '';
+                const entrydt = getRowVal(row, ['entrydt', 'entryDate', 'entrydate']) || '';
+                return {
+                    "Sr.No": idx + 1,
+                    "Employee Code": empCode,
+                    "Tea": tea,
+                    "Snacks": snk,
+                    "Beverage & Snacks": bs,
+                    "Log Date": formatDate(logdt),
+                    "Entry Date": formatDate(entrydt)
+                };
+            });
 
-        const ws = XLSX.utils.json_to_sheet(dataRows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Details");
+            const ws = XLSX.utils.json_to_sheet(dataRows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Details");
 
-        const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
-        const cleanTitle = (title || 'Coupon_Details').replace(/[^a-zA-Z0-9]/g, '_');
-        saveAs(blob, `${cleanTitle}.xlsx`);
+            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
+            const cleanTitle = (title || 'Coupon_Details').replace(/[^a-zA-Z0-9]/g, '_');
+            saveAs(blob, `${cleanTitle}.xlsx`);
+            toast.success("Excel file downloaded successfully!");
+        } catch (err) {
+            toast.error("Error exporting Excel file.");
+        }
     };
 
     const weeklyTrendData = {
@@ -1116,15 +1149,27 @@ function DashboardModal({
 
                 {/* Pagination Footer */}
                 {!loading && !error && filteredRowsCount > 0 && (
-                    <TablePagination
-                        rowsPerPageOptions={[50, 100, 200]}
-                        component="div"
-                        count={filteredRowsCount}
-                        rowsPerPage={rowsPerPage}
-                        page={page}
-                        onPageChange={(_e, newPage) => onPageChange(newPage)}
-                        onRowsPerPageChange={(e) => onRowsPerPageChange(parseInt(e.target.value, 10))}
-                    />
+                    <Box sx={{ borderTop: '1px solid #e2e8f0', bgcolor: '#f8fafc', px: 2, py: 0.5, flexShrink: 0 }}>
+                        <TablePagination
+                            rowsPerPageOptions={[50, 100, 200, 500, 1000]}
+                            component="div"
+                            count={filteredRowsCount}
+                            rowsPerPage={rowsPerPage}
+                            page={page}
+                            onPageChange={(_e, newPage) => onPageChange(newPage)}
+                            onRowsPerPageChange={(e) => onRowsPerPageChange(parseInt(e.target.value, 10))}
+                            sx={{
+                                '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+                                    fontSize: '13px',
+                                    fontWeight: 600,
+                                    color: '#334155',
+                                },
+                                '.MuiTablePagination-select': {
+                                    fontWeight: 600,
+                                }
+                            }}
+                        />
+                    </Box>
                 )}
             </Box>
         </Box>

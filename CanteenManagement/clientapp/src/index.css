@@ -1,68 +1,234 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  
+  /* Primary Theme Palette (iOS 26 / Modern Gradient Inspiration) */
+  --primary-color: #6366f1;
+  --primary-dark: #4f46e5;
+  --primary-light: #818cf8;
+  --primary-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  --header-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  
+  /* Background colors */
+  --bg-main: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-subtle: #f1f5f9;
+  
+  /* Text colors */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  
+  /* Card Glassmorphism & Elevation */
+  --card-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+  --card-shadow-hover: 0 20px 30px -10px rgba(99, 102, 241, 0.15), 0 8px 15px -3px rgba(0, 0, 0, 0.07);
+  --card-border: 1px solid rgba(226, 232, 240, 0.8);
+  --card-radius: 16px;
+  
+  /* Status Colors */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+  --color-info: #3b82f6;
+  
+  /* Tables */
+  --table-header-bg: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  --table-header-text: #ffffff;
+  --table-row-hover: #f1f5f9;
+  --table-stripe-bg: #f8fafc;
+}
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+html, body {
+  height: 100%;
+  font-family: var(--font-family);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
+#root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+/* Custom Styled Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Utility Card Classes */
+.canteen-card {
+  background: var(--bg-card);
+  border: var(--card-border);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.canteen-card-interactive {
   cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+.canteen-card-interactive:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--card-shadow-hover);
+}
+
+/* Stat & Coupon Card Styling */
+.stat-card-gradient {
+  border-radius: 16px !important;
+  color: #ffffff !important;
+  transition: transform 0.25s ease, box-shadow 0.25s ease !important;
+  box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.12) !important;
+}
+
+.stat-card-gradient:hover {
+  transform: translateY(-5px) scale(1.02) !important;
+  box-shadow: 0 16px 30px -6px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Table Styling Overrides for MUI & Bootstrap */
+.custom-table-container {
+  border-radius: 14px !important;
+  box-shadow: var(--card-shadow) !important;
+  border: var(--card-border) !important;
+  overflow: hidden !important;
+  background: #ffffff !important;
+}
+
+.custom-table-header {
+  background: var(--table-header-bg) !important;
+}
+
+.custom-table-header th, 
+.custom-table-header .MuiTableCell-head {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  padding: 14px 16px !important;
+  border-bottom: none !important;
+}
+
+.custom-table-row:nth-of-type(even) {
+  background-color: var(--table-stripe-bg) !important;
+}
+
+.custom-table-row:hover {
+  background-color: var(--table-row-hover) !important;
+  transition: background-color 0.15s ease-in-out !important;
+}
+
+/* MUI DataGrid Custom Premium Style */
+.MuiDataGrid-root {
+  border: none !important;
+  font-family: var(--font-family) !important;
+  border-radius: 12px !important;
+}
+
+.MuiDataGrid-columnHeaders {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+}
+
+.MuiDataGrid-columnHeaderTitle {
+  font-weight: 700 !important;
+  letter-spacing: 0.4px !important;
+  text-transform: uppercase !important;
+  font-size: 0.82rem !important;
+  color: #ffffff !important;
+}
+
+.MuiDataGrid-row:hover {
+  background-color: #eef2ff !important;
+}
+
+.MuiDataGrid-cell {
+  border-bottom: 1px solid #f1f5f9 !important;
+  font-size: 0.875rem !important;
+}
+
+/* Gradient Action Buttons */
+.btn-gradient-primary {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3) !important;
+  transition: all 0.25s ease !important;
+}
+
+.btn-gradient-primary:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.45) !important;
+}
+
+.btn-gradient-success {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+  transition: all 0.25s ease !important;
+}
+
+.btn-gradient-success:hover {
+  background: linear-gradient(135deg, #047857 0%, #059669 100%) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.45) !important;
+}
+
+.btn-gradient-secondary {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%) !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  border: none !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 12px rgba(71, 85, 105, 0.25) !important;
+  transition: all 0.25s ease !important;
+}
+
+.btn-gradient-secondary:hover {
+  background: linear-gradient(135deg, #475569 0%, #334155 100%) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Glassmorphism Header */
+.glass-header {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
