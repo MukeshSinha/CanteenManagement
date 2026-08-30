@@ -145,6 +145,13 @@ const ContractorCategoryDeptWiseSummary: React.FC = () => {
         loadCategories();
     }, []);
 
+    // Clear previous report results whenever filter criteria change
+    useEffect(() => {
+        setShowReport(false);
+        setReportRows([]);
+        setReportColumns([]);
+    }, [fromDate, upToDate, selectedCategories]);
+
     const fetchContractorCategoryDeptWiseReport = async (params: { fromDate: string; upToDate: string; category: string }) => {
         try {
             setApiError('');

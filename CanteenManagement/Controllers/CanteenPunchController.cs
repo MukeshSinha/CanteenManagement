@@ -250,5 +250,27 @@ namespace CanteenManagement.Controllers
             }
            
         }
+
+        [HttpGet("ContractorMeal-Amount")]
+        public async Task<IActionResult> ContractorMealAmount(
+            [FromQuery] string? fromdate = null,
+            [FromQuery] string? uptodate = null,
+             [FromQuery] string? contractor = null
+            )
+        {
+            try
+            {
+                string url = ApiService.Canteen + $"CanteenPunch/ContractorMealAmount?Fromdate={fromdate}&Uptodate={uptodate}&contractor={contractor}";
+                var mHeader = _headers.GetHeaders();
+                var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+                return Content(response, "application/json");
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(new { message = ex.Message });
+            }
+
+        }
     }
 }

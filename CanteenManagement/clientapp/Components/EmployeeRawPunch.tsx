@@ -127,6 +127,12 @@ const EmployeeRawPunch: React.FC = () => {
         loadEmployeeDropdown();
     }, []);
 
+    // Clear previous report results whenever filter criteria change
+    useEffect(() => {
+        setShowReport(false);
+        setReportRows([]);
+    }, [fromDate, upToDate, selectedEmployee]);
+
     const handleShowReport = async () => {
         if (!fromDate || !upToDate) {
             Toast.fire({

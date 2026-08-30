@@ -47,6 +47,13 @@ const MachineWisePunch: React.FC = () => {
 
     const isShowEnabled = Boolean(fromDate && upToDate);
 
+    // Clear previous report results whenever filter criteria change
+    React.useEffect(() => {
+        setShowReport(false);
+        setReportRows([]);
+        setColumns([]);
+    }, [fromDate, upToDate]);
+
     const handleShowReport = async () => {
         if (!fromDate || !upToDate) return;
 

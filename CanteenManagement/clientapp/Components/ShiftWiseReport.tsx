@@ -138,6 +138,13 @@ function ShiftWiseReport() {
         fetchCategories();
     }, []);
 
+    // Clear previous report results whenever filter criteria change
+    useEffect(() => {
+        setShowReport(false);
+        setReportRows([]);
+        setReportColumns([]);
+    }, [fromDate, upToDate, selectedCategory, contractor]);
+
     const handleShow = async () => {
         if (!fromDate || !upToDate || !selectedCategory) {
             alert('From date, Up to date aur Category select karo');

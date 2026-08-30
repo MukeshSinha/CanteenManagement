@@ -17,6 +17,7 @@ import ContractorDeptWiseSummary from '../Components/ContractorDeptWiseSummary';
 import ContractorCategoryDeptWiseSummary from '../Components/ContractorCategoryDeptWiseSummary';
 import SummarySprlHead from '../Components/SummarySprlHead';
 import MachineWisePunch from '../Components/MachineWisePunch';
+import ContractorMealAmount from '../Components/ContractorMealAmount';
 import UserDashboard from '../Components/UserDashboard';
 import DatewiseTotalMeal from '../Components/DatewiseTotalMeal';
 
@@ -106,6 +107,7 @@ function App() {
                         <Route path="ContractorCategoryDeptWise" element={<ContractorCategoryDeptWiseSummary />} />
                         <Route path="SummarySprlHead" element={<SummarySprlHead />} />
                         <Route path="MachineWisePunch" element={<MachineWisePunch />} />
+                        <Route path="ContractorMealAmount" element={<ContractorMealAmount />} />
                     </Route>
                 </Route>
 
