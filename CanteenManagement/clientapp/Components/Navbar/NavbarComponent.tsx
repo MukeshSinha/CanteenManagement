@@ -90,6 +90,9 @@ const NavbarComponent: React.FC = () => {
                                     <Nav.Link as={Link} to="/reports/daily-meal/datewise-total-meal">
                                         Datewise Total Meal
                                     </Nav.Link>
+                                    <Nav.Link as={Link} to="/reports/summary/MachineWisePunch">
+                                        Machine Wise Punch
+                                    </Nav.Link>
                                 </>
                             ) : (
                                 <>
