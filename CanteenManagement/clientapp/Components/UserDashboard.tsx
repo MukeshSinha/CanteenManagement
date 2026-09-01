@@ -73,8 +73,12 @@ const getRowVal = (row: any, keys: string[]): any => {
     if (!row) return undefined;
     for (const key of keys) {
         if (row[key] !== undefined) return row[key];
-        const lower = key.toLowerCase();
-        if (row[lower] !== undefined) return row[lower];
+    }
+    const lowerKeys = keys.map(k => k.toLowerCase());
+    for (const actualKey of Object.keys(row)) {
+        if (lowerKeys.includes(actualKey.toLowerCase())) {
+            return row[actualKey];
+        }
     }
     return undefined;
 };

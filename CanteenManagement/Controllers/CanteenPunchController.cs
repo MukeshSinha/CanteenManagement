@@ -59,7 +59,7 @@ namespace CanteenManagement.Controllers
                 }
                 else
                 {
-                    url += $"CanteenPunch/GetCopuns";
+                    url += $"Coupon/getCouponDashboard";
                 }
                 var mHeader = _headers.GetHeaders();
                 var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
