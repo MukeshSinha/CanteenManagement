@@ -1,6 +1,7 @@
 ﻿using CanteenManagement.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics.Contracts;
 
 namespace CanteenManagement.Controllers
 {
@@ -261,6 +262,49 @@ namespace CanteenManagement.Controllers
             try
             {
                 string url = ApiService.Canteen + $"CanteenPunch/ContractorMealAmount?Fromdate={fromdate}&Uptodate={uptodate}&contractor={contractor}";
+                var mHeader = _headers.GetHeaders();
+                var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+                return Content(response, "application/json");
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(new { message = ex.Message });
+            }
+
+        }
+
+        // Date Wise Coupn
+
+        [HttpGet("DateWise-Coupon")]
+        public async Task<IActionResult> DateWiseCoupon(
+            [FromQuery] string? fromdate = null,
+            [FromQuery] string? uptodate = null)
+        {
+            try
+            {
+                string url = ApiService.Canteen + $"Coupon/DateWiseCoupon?fromdate={fromdate}&uptodate={uptodate}";
+                var mHeader = _headers.GetHeaders();
+                var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
+                return Content(response, "application/json");
+            }
+            catch (Exception ex)
+            {
+
+                return BadRequest(new { message = ex.Message });
+            }
+
+        }
+
+        // get Employee Coupon
+        [HttpGet("Employee-Coupon")]
+        public async Task<IActionResult> EmployeeCoupon(
+            [FromQuery] string? fromdate = null,
+            [FromQuery] string? uptodate = null)
+        {
+            try
+            {
+                string url = ApiService.Canteen + $"Coupon/EmployeeCoupon?fromdate={fromdate}&uptodate={uptodate}";
                 var mHeader = _headers.GetHeaders();
                 var response = await apiConsume.SendRequestAsync(url, HttpMethod.Get, mHeader, null);
                 return Content(response, "application/json");

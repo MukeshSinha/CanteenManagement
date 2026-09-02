@@ -10,6 +10,7 @@ const NavbarComponent: React.FC = () => {
     const [showReports, setShowReports] = useState(false);
     const [showDailyMeal, setShowDailyMeal] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
+    const [showCoupon, setShowCoupon] = useState(false);
 
     const [showUser, setShowUser] = useState(false);
 
@@ -93,6 +94,20 @@ const NavbarComponent: React.FC = () => {
                                     <Nav.Link as={Link} to="/reports/summary/MachineWisePunch">
                                         Machine Wise Punch
                                     </Nav.Link>
+                                    <NavDropdown
+                                        title="Coupon"
+                                        show={showCoupon}
+                                        onMouseEnter={() => setShowCoupon(true)}
+                                        onMouseLeave={() => setShowCoupon(false)}
+                                        menuVariant="dark"
+                                    >
+                                        <NavDropdown.Item as={Link} to="/reports/coupon/date-wise">
+                                            Date Wise Coupon
+                                        </NavDropdown.Item>
+                                        <NavDropdown.Item as={Link} to="/reports/coupon/employee">
+                                            Employee Coupon
+                                        </NavDropdown.Item>
+                                    </NavDropdown>
                                 </>
                             ) : (
                                 <>
@@ -114,6 +129,21 @@ const NavbarComponent: React.FC = () => {
                                         </NavDropdown>
                                     )}
 
+                                    {/* COUPON MENU */}
+                                    <NavDropdown
+                                        title="Coupon"
+                                        show={showCoupon}
+                                        onMouseEnter={() => setShowCoupon(true)}
+                                        onMouseLeave={() => setShowCoupon(false)}
+                                        menuVariant="dark"
+                                    >
+                                        <NavDropdown.Item as={Link} to="/reports/coupon/date-wise">
+                                            Date Wise Coupon
+                                        </NavDropdown.Item>
+                                        <NavDropdown.Item as={Link} to="/reports/coupon/employee">
+                                            Employee Coupon
+                                        </NavDropdown.Item>
+                                    </NavDropdown>
 
                                     {/* REPORTS */}
                                     <NavDropdown
@@ -162,14 +192,6 @@ const NavbarComponent: React.FC = () => {
                                             onMouseEnter={() => setShowSummary(true)}
                                             onMouseLeave={() => setShowSummary(false)}
                                         >
-                                            {/* <NavDropdown.Item as={Link} to="/reports/summary/individual">
-                                                Individual
-                                            </NavDropdown.Item>
-
-                                            <NavDropdown.Item as={Link} to="/reports/summary/contractor-wise">
-                                                Contractor Wise
-                                            </NavDropdown.Item> */}
-
                                             <NavDropdown.Item as={Link} to="/reports/summary/MonthlyMealSummary">
                                                 Monthly Meal Summary
                                             </NavDropdown.Item>

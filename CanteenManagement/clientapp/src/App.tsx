@@ -20,6 +20,8 @@ import MachineWisePunch from '../Components/MachineWisePunch';
 import ContractorMealAmount from '../Components/ContractorMealAmount';
 import UserDashboard from '../Components/UserDashboard';
 import DatewiseTotalMeal from '../Components/DatewiseTotalMeal';
+import DateWiseCoupon from '../Components/DateWiseCoupon';
+import EmployeeCoupon from '../Components/EmployeeCoupon';
 
 function LogoutAction() {
     sessionStorage.clear();
@@ -108,6 +110,11 @@ function App() {
                         <Route path="SummarySprlHead" element={<SummarySprlHead />} />
                         <Route path="MachineWisePunch" element={<MachineWisePunch />} />
                         <Route path="ContractorMealAmount" element={<ContractorMealAmount />} />
+                    </Route>
+
+                    <Route path="coupon">
+                        <Route path="date-wise" element={<DateWiseCoupon />} />
+                        <Route path="employee" element={<EmployeeCoupon />} />
                     </Route>
                 </Route>
 
