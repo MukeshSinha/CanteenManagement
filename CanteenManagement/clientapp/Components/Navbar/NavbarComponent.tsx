@@ -11,6 +11,7 @@ const NavbarComponent: React.FC = () => {
     const [showDailyMeal, setShowDailyMeal] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
     const [showCoupon, setShowCoupon] = useState(false);
+    const [showCouponReports, setShowCouponReports] = useState(false);
 
     const [showUser, setShowUser] = useState(false);
 
@@ -218,6 +219,23 @@ const NavbarComponent: React.FC = () => {
                                             </NavDropdown.Item>
                                             <NavDropdown.Item as={Link} to="/reports/summary/ContractorMealAmount">
                                                 Contractor Meal Amount
+                                            </NavDropdown.Item>
+                                        </NavDropdown>
+
+                                        {/* COUPON SUBMENU */}
+                                        <NavDropdown
+                                            title="Coupon"
+                                            drop="end"
+                                            className="dropdown-submenu"
+                                            show={showCouponReports}
+                                            onMouseEnter={() => setShowCouponReports(true)}
+                                            onMouseLeave={() => setShowCouponReports(false)}
+                                        >
+                                            <NavDropdown.Item as={Link} to="/reports/coupon/date-wise">
+                                                Date Wise Coupon
+                                            </NavDropdown.Item>
+                                            <NavDropdown.Item as={Link} to="/reports/coupon/employee">
+                                                Employee Coupon
                                             </NavDropdown.Item>
                                         </NavDropdown>
 
